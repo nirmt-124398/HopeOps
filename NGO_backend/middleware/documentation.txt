@@ -1,0 +1,151 @@
+1. Authentication Middleware (verifyToken, requireRole)
+Location: middleware/auth.js
+Used In: Protected routes (NGO dashboard, donations, emergencies, adoptions)
+Purpose:
+
+verifyToken:
+
+Validates JWT from cookies/headers
+
+Verifies user exists in database
+
+Attaches user object to req.user
+
+javascript
+
+// Usage example:
+router.get('/dashboard', verifyToken, getDashboard);
+requireRole:
+
+Restricts access based on user roles (USER, NGO_ADMIN, SUPER_ADMIN)
+
+Prevents unauthorized operations
+
+javascript
+
+// Usage example:
+router.post('/ngos', verifyToken, requireRole('NGO_ADMIN'), createNGO);
+2. Security Middleware (apiLimiter, securityHeaders, sanitizeInput)
+Location: middleware/security.js
+Used In: Applied globally to all routes
+Purpose:
+
+apiLimiter:
+
+Prevents brute-force/DDoS attacks
+
+Limits to 200 requests/15 mins per IP
+
+javascript
+
+// Applied first in middleware chain
+app.use(apiLimiter);
+securityHeaders:
+
+Sets secure HTTP headers (via Helmet)
+
+Prevents XSS, clickjacking, MIME sniffing
+
+javascript
+
+// Sets Content-Security-Policy headers
+app.use(securityHeaders);
+sanitizeInput:
+
+Removes HTML tags from user inputs
+
+Prevents XSS injection
+
+javascript
+
+// Cleans request body/query params
+app.use(sanitizeInput);
+3. Payment Webhook Verification (verifyWebhook)
+Location: middleware/payment.js
+Used In: Payment webhook routes (/donations/webhook)
+Purpose:
+
+Validates Razorpay webhook signatures
+
+Ensures payment notifications are genuine
+
+javascript
+
+// Usage example:
+router.post('/webhook', verifyWebhook, handlePayment);
+4. Data Retention Middleware (softDelete, excludeDeleted)
+Location: middleware/dataRetention.js
+Used In: DELETE operations and GET queries
+Purpose:
+
+softDelete:
+
+Implements soft deletion by setting deletedAt timestamp
+
+javascript
+
+// Usage in delete route:
+router.delete('/:id', softDelete, deleteUser);
+excludeDeleted:
+
+Filters out soft-deleted records automatically
+
+javascript
+
+// Usage in queries:
+const users = await prisma.user.findMany(excludeDeleted);
+5. Error Handling Middleware (errorHandler)
+Location: middleware/errorHandler.js
+Used In: Last middleware in the chain
+Purpose:
+
+Central error handling for all routes
+
+Logs errors and sends structured responses
+
+javascript
+
+// Applied last:
+app.use(errorHandler);
+6. Request Validation Middleware (validateRequest)
+Location: middleware/validators.js
+Used In: POST/PUT routes (user registration, donations)
+Purpose:
+
+Validates request bodies against Joi schemas
+
+Returns detailed validation errors
+
+javascript
+
+// Usage example:
+router.post('/register', validateRequest(registerSchema), registerUser);
+
+
+Middleware Execution Order
+Security Headers
+
+Rate Limiter
+
+Input Sanitization
+
+Body Parsers
+
+Authentication
+
+Route Handlers
+
+Error Handler
+
+This order ensures:
+
+Security protections apply first
+
+Authentication happens before business logic
+
+Errors get handled last
+
+
+
+
+
