@@ -8,14 +8,14 @@
     "dev": "nodemon index.js",
     "seed": "node prisma/seed.js",
     "seed-ngo-admin": "node prisma/seed-ngo-admin.js",
-     "diagnose-ngo-admin": "node scripts/diagnose-ngo-admin.js"
+    "diagnose-ngo-admin": "node scripts/diagnose-ngo-admin.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.6.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "prisma": "^6.3.1",
+    "prisma": "^6.6.0",
     "prisma-dbml-generator": "^0.6.0"
   }
 }

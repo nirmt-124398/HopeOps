@@ -26,6 +26,11 @@ export const listAllNGOs = async (req, res) => {
 export const createNGO = async (req, res) => {
     try{
         const { name, description, website, contactEmail, phone, address, logo, socialMedia } = req.body;
+        
+        // Get the user ID from the authenticated request
+        const userId = req.user;
+        
+        // Create the NGO
         const ngo = await prisma.NGO.create({
             data: {
                 name,
@@ -35,14 +40,38 @@ export const createNGO = async (req, res) => {
                 phone,
                 address,
                 logo,
-                socialMedia
+                socialMedia,
+                // Create an NGO admin record at the same time
+                admins: {
+                    create: [
+                        {
+                            user: {
+                                connect: { id: userId }
+                            }
+                        }
+                    ]
+                }
             },
+            include: {
+                admins: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
         });
+        
         res.status(201).json(ngo);
     }
     catch (error) {
         console.error("Error creating NGO:", error);
-        res.status(500).json({ message: "Error in file: ngo.controller.js ( createNGO )" });
+        res.status(500).json({ message: "Error in file: ngo.controller.js ( createNGO )", error: error.message });
     }
 }
 

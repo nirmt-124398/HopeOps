@@ -152,6 +152,11 @@ model EmergencyResponse {
   ngoId       String      @db.ObjectId
   status      ResponseStatus @default(PENDING)
   acceptedAt  DateTime?
+  updatedAt   DateTime    @updatedAt
+  notes       String?     // Optional notes about the response
+  respondedBy String?     @db.ObjectId // ID of the NGO admin who responded
+
+  @@index([emergencyId, ngoId])
 }
 
 enum ResponseStatus {
@@ -220,11 +225,30 @@ model Rescue {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   location    String
   description String
-  status      String   @default("PENDING")
+  status      RescueStatus @default(PENDING)
   animalType  String
-  priority    String   @default("MEDIUM")
+  priority    RescuePriority @default(MEDIUM)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String   @db.ObjectId
   createdByUser User   @relation(fields: [createdBy], references: [id])
+  assignedTo  String?  @db.ObjectId
+  completedAt DateTime?
+
+  @@index([status, priority])
+  @@index([createdBy])
+}
+
+enum RescueStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RescuePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
