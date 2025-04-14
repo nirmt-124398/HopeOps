@@ -6,7 +6,8 @@ import {
   createEmergency, 
   getEmergencyStatus, 
   respondToEmergency,
-  updateEmergencyResponseStatus 
+  updateEmergencyResponseStatus,
+  listPendingEmergencies 
 } from '../controllers/emergency.controller.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 
@@ -24,5 +25,8 @@ router.post('/:EmergencyId/respond', verifyToken, requireRole('NGO_ADMIN'), resp
 
 // New route: Update emergency response status (requires NGO_ADMIN role)
 router.patch('/:emergencyId/response/:responseId', verifyToken, requireRole('NGO_ADMIN'), updateEmergencyResponseStatus);
+
+// New route: List pending emergencies (requires NGO_ADMIN role)
+router.get('/emergencies/pending', verifyToken, requireRole('NGO_ADMIN'), listPendingEmergencies);
 
 export default router;

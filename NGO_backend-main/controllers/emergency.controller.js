@@ -23,6 +23,32 @@ export const listEmergencies = async (req, res) => {
     }
 };
 
+// List only emergencies with PENDING status
+export const listPendingEmergencies = async (req, res) => {
+    try {
+        const pendingEmergencies = await prisma.emergency.findMany({
+            where: {
+                status: 'PENDING'
+            },
+            include: {
+                responses: true,
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true
+                    }
+                },
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        return res.status(200).json(pendingEmergencies);
+    } catch (error) {
+        console.error("Error listing pending emergencies:", error);
+        return res.status(500).json({ error: "Error fetching pending emergencies" });
+    }
+};
+
 export const createEmergency = async (req, res) => {
     try {
         const userId = req.user;
