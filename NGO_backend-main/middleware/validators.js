@@ -64,38 +64,40 @@ export const createNGOSchema = Joi.object({
     'string.empty': 'Description is required',
   }),
   website: Joi.string().uri().required().messages({
-    'string.uri': 'Please provide a valid website URL',
+    'string.uri': 'Website must be a valid URL',
     'string.empty': 'Website is required',
   }),
   contactEmail: Joi.string().email().required().messages({
-    'string.email': 'Please provide a valid email address',
+    'string.email': 'Contact email must be a valid email address',
     'string.empty': 'Contact email is required',
   }),
-  phone: Joi.string().pattern(/^\d{10}$/).required().messages({
-    'string.pattern.base': 'Phone number must be 10 digits long',
+  phone: Joi.string().required().messages({
     'string.empty': 'Phone number is required',
   }),
-  address: Joi.string().min(10).required().messages({
-    'string.min': 'Address must be at least 10 characters long',
+  address: Joi.string().required().messages({
     'string.empty': 'Address is required',
   }),
-  logo: Joi.string().uri().optional().messages({
-    'string.uri': 'Logo must be a valid URL to an image'
+  logo: Joi.string().uri().optional().allow('').messages({
+    'string.uri': 'Logo URL must be a valid URL'
   }),
+  subscriptionId: Joi.string().optional().messages({
+    'string.empty': 'Subscription ID cannot be empty if provided',
+  }),
+  planId: Joi.string().optional(),
   socialMedia: Joi.object({
-    facebook: Joi.string().uri().optional().messages({
+    facebook: Joi.string().uri().optional().allow('').messages({
       'string.uri': 'Facebook link must be a valid URL'
     }),
-    twitter: Joi.string().uri().optional().messages({
+    twitter: Joi.string().uri().optional().allow('').messages({
       'string.uri': 'Twitter link must be a valid URL'
     }),
-    instagram: Joi.string().uri().optional().messages({
+    instagram: Joi.string().uri().optional().allow('').messages({
       'string.uri': 'Instagram link must be a valid URL'
     }),
-    linkedin: Joi.string().uri().optional().messages({
+    linkedin: Joi.string().uri().optional().allow('').messages({
       'string.uri': 'LinkedIn link must be a valid URL'
     }),
-    youtube: Joi.string().uri().optional().messages({
+    youtube: Joi.string().uri().optional().allow('').messages({
       'string.uri': 'YouTube link must be a valid URL'
     })
   }).optional()

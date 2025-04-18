@@ -23,6 +23,28 @@ const Header = () => {
     navigate('/');
   };
 
+  // Navigation categories
+  const mainNavItems = [
+    { path: '/', label: 'Home' },
+    { path: '/animals', label: 'Animals' },
+    { path: '/adopt', label: 'Adopt' },
+    { path: '/donate', label: 'Donate' },
+    { path: '/subscription-plans', label: 'Pricing' },
+  ];
+
+  const actionNavItems = [
+    { path: '/report-incident', label: 'Report Incident', className: 'bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-800 transition' },
+  ];
+
+  const userNavItems = [
+    { path: '/profile', label: 'My Profile', show: true },
+    { path: '/ngo/profile', label: 'NGO Profile', show: user?.role === 'NGO_ADMIN' },
+  ];
+
+  const adminNavItems = [
+    { path: '/admin', label: 'Admin Dashboard', show: isAdmin() },
+  ];
+
   return (
     <motion.header 
       className="bg-primary text-white shadow-md"
@@ -32,21 +54,42 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <img src={logo} alt="L0go" className='h-10'/>
-          </Link>
-          
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className={`hover:text-secondary ${isActive('/')}`}>Home</Link>
-            <Link to="/animals" className={`hover:text-secondary ${isActive('/animals')}`}>Animals</Link>
-            <Link to="/adopt" className={`hover:text-secondary ${isActive('/adopt')}`}>Adopt</Link>
-            <Link to="/donate" className={`hover:text-secondary ${isActive('/donate')}`}>Donate</Link>
-            <Link to="/report-incident" className={`bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-800 transition ${isActive('/report-incident')}`}>Report Incident</Link>
+          {/* Left Side: Logo and Main Navigation */}
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="Logo" className='h-10'/>
+            </Link>
             
-            {isAdmin() && (
-              <Link to="/admin" className={`hover:text-secondary ${isActive('/admin')}`}>Admin</Link>
-            )}
-            
+            {/* Main Navigation */}
+            <nav className="hidden md:flex items-center space-x-6">
+              {mainNavItems.map((item) => (
+                <Link 
+                  key={item.path}
+                  to={item.path} 
+                  className={`hover:text-secondary ${isActive(item.path)}`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Right Side: Actions, User Menu, and Admin */}
+          <div className="flex items-center space-x-6">
+            {/* Actions */}
+            <div className="hidden md:flex items-center space-x-6">
+              {actionNavItems.map((item) => (
+                <Link 
+                  key={item.path}
+                  to={item.path} 
+                  className={`${item.className} ${isActive(item.path)}`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* User Menu */}
             {user ? (
               <div className="relative group">
                 <button className="flex items-center space-x-2 bg-secondary text-white px-4 py-2 rounded-full hover:bg-opacity-90 transition">
@@ -58,25 +101,26 @@ const Header = () => {
                 <div className="absolute right-0 mt-0.5 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block transition-all duration-300"
                      style={{ transitionDelay: '1.5s' }}
                      onMouseLeave={(e) => {
-                       // Check if the element exists before accessing classList
                        if (e.currentTarget) {
                          e.currentTarget.classList.add('delay-hide');
                          setTimeout(() => {
-                           // Double-check if element still exists before removing class
                            if (e.currentTarget && e.currentTarget.classList.contains('delay-hide')) {
                              e.currentTarget.classList.remove('delay-hide');
                            }
                          }, 500);
                        }
                      }}>
-                  <Link to="/profile" className="block px-4 py-3 text-gray-800 hover:bg-gray-100">
-                    My Profile
-                  </Link>
-                  {user?.role === 'NGO_ADMIN' && (
-                    <Link to="/ngo/profile" className="block px-4 py-3 text-gray-800 hover:bg-gray-100">
-                      NGO Profile
-                    </Link>
-                  )}
+                  {userNavItems.map((item) => (
+                    item.show && (
+                      <Link 
+                        key={item.path}
+                        to={item.path} 
+                        className="block px-4 py-3 text-gray-800 hover:bg-gray-100"
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  ))}
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100"
@@ -90,7 +134,22 @@ const Header = () => {
                 Login
               </Link>
             )}
-          </nav>
+
+            {/* Admin Section */}
+            <div className="hidden md:flex items-center border-l border-gray-600 pl-6">
+              {adminNavItems.map((item) => (
+                item.show && (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    className={`hover:text-secondary ${isActive(item.path)}`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              ))}
+            </div>
+          </div>
           
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
@@ -102,69 +161,100 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <motion.div 
-            className="md:hidden bg-primary shadow-lg border-t border-gray-700 mt-4 rounded-b-lg"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden mt-4 pb-4"
           >
-            <nav className="flex flex-col py-4">
-              <Link to="/" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Home</Link>
-              <Link to="/animals" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Animals</Link>
-              <Link to="/adopt" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Adopt</Link>
-              <Link to="/volunteer" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Volunteer</Link>
-              <Link to="/donate" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Donate</Link>
-              <div className="px-6 py-3">
-                <Link 
-                  to="/report-incident" 
-                  className="block bg-red-600 text-white font-semibold px-4 py-3 rounded-md text-center hover:bg-red-800 transition-colors w-full" 
-                  onClick={toggleMobileMenu}
-                >
-                  Report Incident
-                </Link>
+            <div className="flex flex-col space-y-6">
+              {/* Main Navigation */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-400">Main Menu</h3>
+                {mainNavItems.map((item) => (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    className={`block hover:text-secondary ${isActive(item.path)}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </div>
-              {isAdmin() && (
-                <Link to="/admin" className="px-6 py-3 hover:bg-blue-800 hover:text-secondary transition-colors text-center" onClick={toggleMobileMenu}>Admin</Link>
-              )}
-              <div className="px-6 py-3">
+
+              {/* Actions */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-400">Actions</h3>
+                {actionNavItems.map((item) => (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    className={`block ${item.className} ${isActive(item.path)}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Account */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-400">Account</h3>
                 {user ? (
-                  <div className="space-y-2">
-                    <Link 
-                      to="/profile" 
-                      className="block bg-secondary text-white font-semibold px-4 py-3 rounded-md text-center hover:bg-opacity-90 transition-colors w-full"
-                      onClick={toggleMobileMenu}
-                    >
-                      My Profile
-                    </Link>
-                    {user.role === 'NGO_ADMIN' && (
-                      <Link 
-                        to="/ngo/profile" 
-                        className="block bg-secondary text-white font-semibold px-4 py-3 rounded-md text-center hover:bg-opacity-90 transition-colors w-full"
-                        onClick={toggleMobileMenu}
-                      >
-                        NGO Profile
-                      </Link>
-                    )}
+                  <>
+                    {userNavItems.map((item) => (
+                      item.show && (
+                        <Link 
+                          key={item.path}
+                          to={item.path} 
+                          className="block hover:text-secondary"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {item.label}
+                        </Link>
+                      )
+                    ))}
                     <button 
-                      onClick={() => { handleLogout(); toggleMobileMenu(); }}
-                      className="w-full bg-orange-500 text-white font-semibold px-4 py-3 rounded-md hover:bg-orange-600 transition-colors"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left hover:text-secondary"
                     >
                       Logout
                     </button>
-                  </div>
+                  </>
                 ) : (
                   <Link 
                     to="/login" 
-                    className="block bg-orange-500 text-white font-semibold px-4 py-3 rounded-md text-center hover:bg-orange-600 transition-colors w-full"
-                    onClick={toggleMobileMenu}
+                    className="block bg-secondary text-white px-4 py-2 rounded-full hover:bg-opacity-90 transition"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Login
                   </Link>
                 )}
               </div>
-            </nav>
+
+              {/* Admin */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-400">Admin</h3>
+                {adminNavItems.map((item) => (
+                  item.show && (
+                    <Link 
+                      key={item.path}
+                      to={item.path} 
+                      className="block hover:text-secondary"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
       </div>

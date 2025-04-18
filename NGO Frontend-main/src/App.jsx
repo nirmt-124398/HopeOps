@@ -30,6 +30,8 @@ import RescueCompleted from "./pages/ngoAdmin/RescueCompleted";
 import { rescueAvailableLoader } from "./loaders/rescueAvailableLoader";
 import { rescueOngoingLoader } from "./loaders/rescueOngoingLoader";
 import { rescueCompletedLoader } from "./loaders/rescueCompletedLoader";
+import SubscriptionPlans from "./components/SubscriptionPlans";
+import CreateNGO from "./components/CreateNGO";
 
 // Add smooth scrolling
 const styles = {
@@ -188,6 +190,22 @@ const RoutesWrapper = () => {
           loader={rescueCompletedLoader}
         />
       </Route>
+      <Route
+        path="/subscription-plans"
+        element={
+          <PageWrapper>
+            <SubscriptionPlans />
+          </PageWrapper>
+        }
+      />
+      <Route
+        path="/create-ngo"
+        element={
+            <PageWrapper>
+              <CreateNGO />
+            </PageWrapper>
+        }
+      />
     </Routes>
   );
 };

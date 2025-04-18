@@ -72,3 +72,61 @@ export const deleteUserProfile = async (req, res) => {
         return res.status(500).json({ message: "Error in file: user.controller.js ( deleteUserProfile )" });
     }      
 };
+
+// Update the current user's role
+export const updateUserRole = async (req, res) => {
+    try {
+        const userId = req.user;
+        const { role } = req.body;
+        
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Unauthorized" 
+            });
+        }
+        
+        if (!role) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Role is required" 
+            });
+        }
+        
+        console.log(`Updating user ${userId} role to ${role}`);
+        
+        // Validate role is one of the allowed values
+        const validRoles = ['USER', 'NGO_ADMIN', 'SUPER_ADMIN'];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Invalid role. Must be one of: ${validRoles.join(', ')}` 
+            });
+        }
+        
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { role },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true
+            }
+        });
+        
+        console.log("User role updated:", updatedUser);
+        
+        res.json({
+            success: true,
+            user: updatedUser
+        });
+    } catch (error) {
+        console.error("Error updating user role:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to update user role", 
+            error: error.message 
+        });
+    }
+};

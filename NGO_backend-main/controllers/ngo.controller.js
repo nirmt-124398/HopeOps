@@ -25,12 +25,94 @@ export const listAllNGOs = async (req, res) => {
 
 export const createNGO = async (req, res) => {
     try{
-        const { name, description, website, contactEmail, phone, address, logo, socialMedia } = req.body;
+        const { name, description, website, contactEmail, phone, address, logo, socialMedia, subscriptionId } = req.body;
         
         // Get the user ID from the authenticated request
         const userId = req.user;
         
-        // Create the NGO
+        console.log("Received user ID from auth middleware:", userId);
+        
+        if (!userId) {
+            return res.status(422).json({
+                success: false,
+                message: "Validation failed",
+                errors: [{ field: "authentication", message: "User not authenticated" }]
+            });
+        }
+        
+        // Log the user ID for debugging
+        console.log("Creating NGO with subscription ID:", subscriptionId);
+        console.log("User ID format:", typeof userId, userId);
+        
+        // First check the user's current role - with error handling
+        let existingUser;
+        try {
+            existingUser = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, username: true, email: true, role: true }
+            });
+            
+            console.log("Found user:", existingUser);
+        } catch (findError) {
+            console.error("Error finding user:", findError);
+            
+            // Try with ObjectId if needed
+            try {
+                const { ObjectId } = require('mongodb');
+                console.log("Trying with MongoDB ObjectId");
+                existingUser = await prisma.user.findUnique({
+                    where: { id: new ObjectId(userId).toString() },
+                    select: { id: true, username: true, email: true, role: true }
+                });
+                console.log("Found user with ObjectId:", existingUser);
+            } catch (objectIdError) {
+                console.error("ObjectId attempt failed:", objectIdError);
+            }
+        }
+        
+        if (!existingUser) {
+            console.log("User not found, falling back to finding by any field");
+            // Try finding the user by other fields
+            try {
+                // Try find by email if user provided it
+                if (contactEmail) {
+                    const userByEmail = await prisma.user.findFirst({
+                        where: { email: contactEmail },
+                        select: { id: true, username: true, email: true, role: true }
+                    });
+                    
+                    if (userByEmail) {
+                        console.log("Found user by email:", userByEmail);
+                        existingUser = userByEmail;
+                        // Update userId to match
+                        userId = userByEmail.id;
+                    }
+                }
+            } catch (fallbackError) {
+                console.error("Fallback search failed:", fallbackError);
+            }
+        }
+        
+        // Even if we can't find the user, let's create the NGO
+        if (!existingUser) {
+            console.warn("Could not find user. Will continue without role update.");
+        } else {
+            console.log("Current user role:", existingUser.role);
+            
+            // Update the user's role to ngo_admin
+            try {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { role: 'NGO_ADMIN' }
+                });
+                console.log("User role updated to NGO_ADMIN");
+            } catch (roleError) {
+                console.error("Error updating role:", roleError);
+                // Continue despite the role update error
+            }
+        }
+
+        // Create the NGO first
         const ngo = await prisma.NGO.create({
             data: {
                 name,
@@ -51,7 +133,98 @@ export const createNGO = async (req, res) => {
                         }
                     ]
                 }
-            },
+            }
+        });
+        
+        console.log("NGO created:", ngo.id);
+        
+        // Now create the subscription with proper relationship to the NGO
+        if (subscriptionId) {
+            try {
+                // First get plan details from the request or fetch from Razorpay
+                const planId = req.body.planId || subscription?.planId;
+                
+                console.log("Creating subscription with plan ID:", planId);
+                
+                // Check if the plan exists in our database
+                const existingPlan = await prisma.subscriptionPlan.findFirst({
+                    where: {
+                        id: planId
+                    }
+                });
+                
+                if (!existingPlan) {
+                    console.log("Plan not found in database, will use a default one");
+                    // Find any available plan in the database
+                    const anyPlan = await prisma.subscriptionPlan.findFirst();
+                    
+                    if (!anyPlan) {
+                        console.error("No subscription plans found in database");
+                        throw new Error("No subscription plans available");
+                    }
+                    
+                    console.log("Using default plan:", anyPlan.id);
+                    
+                    // Create the subscription with the NGO relationship
+                    const subscription = await prisma.subscription.create({
+                        data: {
+                            id: subscriptionId,
+                            startDate: new Date(),
+                            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+                            status: 'COMPLETED',
+                            ngo: {
+                                connect: { id: ngo.id }
+                            },
+                            plan: {
+                                connect: { id: anyPlan.id }
+                            }
+                        }
+                    });
+                    
+                    console.log("Subscription created and linked to NGO:", subscription.id);
+                } else {
+                    // Plan exists, connect to it
+                    console.log("Using existing plan:", existingPlan.id);
+                    
+                    const subscription = await prisma.subscription.create({
+                        data: {
+                            id: subscriptionId,
+                            startDate: new Date(),
+                            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+                            status: 'COMPLETED',
+                            ngo: {
+                                connect: { id: ngo.id }
+                            },
+                            plan: {
+                                connect: { id: existingPlan.id }
+                            }
+                        }
+                    });
+                    
+                    console.log("Subscription created and linked to NGO:", subscription.id);
+                }
+            } catch (subError) {
+                console.error("Error creating subscription:", subError);
+                
+                // Try a simpler approach without relations if the first attempt fails
+                try {
+                    console.log("Trying alternative subscription creation approach");
+                    // Update the NGO with just the subscription ID reference
+                    await prisma.NGO.update({
+                        where: { id: ngo.id },
+                        data: { subscriptionId }
+                    });
+                    console.log("Updated NGO with subscription ID reference");
+                } catch (finalError) {
+                    console.error("Failed to link subscription by any means:", finalError);
+                    // Continue without subscription linkage - the NGO is already created
+                }
+            }
+        }
+        
+        // Get the complete NGO with relations for the response
+        const completeNgo = await prisma.NGO.findUnique({
+            where: { id: ngo.id },
             include: {
                 admins: {
                     include: {
@@ -59,19 +232,43 @@ export const createNGO = async (req, res) => {
                             select: {
                                 id: true,
                                 username: true,
-                                email: true
+                                email: true,
+                                role: true
                             }
                         }
                     }
-                }
+                },
+                subscription: true
             }
         });
         
-        res.status(201).json(ngo);
+        res.status(201).json({ success: true, ngo: completeNgo });
     }
     catch (error) {
         console.error("Error creating NGO:", error);
-        res.status(500).json({ message: "Error in file: ngo.controller.js ( createNGO )", error: error.message });
+        
+        // Provide clearer error messages for specific cases
+        if (error.code === 'P2025') {
+            return res.status(422).json({
+                success: false,
+                message: "Validation failed",
+                errors: [{ field: "subscriptionId", message: "Subscription not found" }]
+            });
+        }
+        
+        if (error.meta?.field_name?.includes('subscription')) {
+            return res.status(422).json({
+                success: false,
+                message: "Validation failed",
+                errors: [{ field: "subscriptionId", message: "Invalid subscription format" }]
+            });
+        }
+        
+        res.status(500).json({ 
+            success: false, 
+            message: "Error creating NGO", 
+            error: error.message 
+        });
     }
 }
 

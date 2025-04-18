@@ -68,6 +68,7 @@ model NGO {
   address         String
   logo            String?       // CDN URL (e.g., S3/Cloudinary)
   socialMedia     Json?         // { facebook: string, instagram: string }
+  subscriptionId  String?
   subscription    Subscription? 
   status          NGOStatus     @default(PENDING)
   admins          NGOAdmin[]
