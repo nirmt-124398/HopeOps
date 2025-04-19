@@ -7,7 +7,7 @@ import { useAnimals } from '../context/AnimalsContext';
 import Input, { TextArea, Select } from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardBody, CardFooter } from '../components/ui/Card';
-import UnderDevelopment from '../components/common/UnderDevelopment';
+import apiRequest from '../utils/apifile.js';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -41,11 +41,16 @@ const AdoptionForm = () => {
   const location = useLocation();
   const { animals, loading } = useAnimals();
   const [selectedAnimal, setSelectedAnimal] = useState(null);
-  
+  const [submitting, setSubmitting] = useState(false);
+  const [adoptionSuccess, setAdoptionSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [userAdoptionRequests, setUserAdoptionRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
   // Get the animalId from URL query string
   const queryParams = new URLSearchParams(location.search);
   const animalId = queryParams.get('animalId');
-  
+
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -54,11 +59,11 @@ const AdoptionForm = () => {
       agreeTerms: false
     }
   });
-  
+
   // Watch for values that affect conditional fields
   const hasOwnedPetsBefore = watch('hasOwnedPetsBefore');
   const hasChildren = watch('hasChildren');
-  
+
   // Set the selected animal when animalId is in the URL
   useEffect(() => {
     if (!loading && animalId) {
@@ -68,16 +73,49 @@ const AdoptionForm = () => {
       }
     }
   }, [animalId, animals, loading]);
-  
-  const onSubmit = (data) => {
-    // In a real app, you would send this data to your backend
-    console.log('Adoption form submitted:', data);
-    
-    // For now, we'll just navigate to a success page
-    alert('Thank you for submitting your adoption application! We will contact you soon.');
-    navigate('/');
+
+  // Fetch user's adoption requests
+  useEffect(() => {
+    const fetchUserAdoptionRequests = async () => {
+      setLoadingRequests(true);
+      try {
+        const response = await apiRequest.get('/adoptions/user-requests');
+        setUserAdoptionRequests(response.data);
+      } catch (err) {
+        console.error('Error fetching adoption requests:', err);
+      } finally {
+        setLoadingRequests(false);
+      }
+    };
+
+    fetchUserAdoptionRequests();
+  }, []);
+
+  const onSubmit = async (data) => {
+    setSubmitting(true);
+    setError('');
+
+    try {
+      // Submit adoption request
+      await apiRequest.post('/adoptions/request', {
+        animalId: animalId
+      });
+
+      setAdoptionSuccess(true);
+      // Refetch adoption requests to update the list
+      const response = await apiRequest.get('/adoptions/user-requests');
+      setUserAdoptionRequests(response.data);
+
+      // For demo purposes, alert instead of navigate
+      alert('Thank you for submitting your adoption application! We will contact you soon.');
+    } catch (err) {
+      console.error('Error submitting adoption request:', err);
+      setError(err.response?.data?.error || 'Failed to submit adoption request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
-  
+
   const housingOptions = [
     { value: '', label: 'Select housing type...' },
     { value: 'house', label: 'House' },
@@ -86,7 +124,7 @@ const AdoptionForm = () => {
     { value: 'mobile', label: 'Mobile Home' },
     { value: 'other', label: 'Other' }
   ];
-  
+
   const activityOptions = [
     { value: '', label: 'Select activity level...' },
     { value: 'sedentary', label: 'Sedentary' },
@@ -97,15 +135,13 @@ const AdoptionForm = () => {
 
   return (
     <div>
-      <UnderDevelopment/>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Adoption Application</h1>
-        <p className="text-gray-600 max-w-3xl">
-          Thank you for your interest in adopting an animal from our shelter.
-          Please fill out this form completely. The information you provide will help us find the best match for you and the animal.
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Adoption's</h1>
+        <p className="text-gray-600">
+          Thank you for your interest in adopting an animal from shelter's.
         </p>
       </div>
-      
+
       {selectedAnimal && (
         <Card className="mb-8">
           <CardHeader className="bg-primary text-white">
@@ -131,267 +167,67 @@ const AdoptionForm = () => {
           </CardBody>
         </Card>
       )}
+
       
-      <Card>
-        <CardBody>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Personal Information */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Personal Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="First Name"
-                  {...register('firstName')}
-                  error={errors.firstName?.message}
-                  required
-                />
-                
-                <Input
-                  label="Last Name"
-                  {...register('lastName')}
-                  error={errors.lastName?.message}
-                  required
-                />
-                
-                <Input
-                  label="Email"
-                  type="email"
-                  {...register('email')}
-                  error={errors.email?.message}
-                  required
-                />
-                
-                <Input
-                  label="Phone Number"
-                  {...register('phone')}
-                  error={errors.phone?.message}
-                  required
-                />
-                
-                <Input
-                  label="Address"
-                  {...register('address')}
-                  error={errors.address?.message}
-                  containerClassName="md:col-span-2"
-                  required
-                />
-                
-                <Input
-                  label="City"
-                  {...register('city')}
-                  error={errors.city?.message}
-                  required
-                />
-                
-                <Input
-                  label="State"
-                  {...register('state')}
-                  error={errors.state?.message}
-                  required
-                />
-                
-                <Input
-                  label="Zip Code"
-                  {...register('zipCode')}
-                  error={errors.zipCode?.message}
-                  required
-                />
-              </div>
-            </div>
-            
-            {/* Housing Information */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Housing Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  label="Housing Type"
-                  {...register('housingType')}
-                  options={housingOptions}
-                  error={errors.housingType?.message}
-                  required
-                />
-                
-                <div className="flex flex-col">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you own or rent?
-                  </label>
-                  <div className="flex space-x-4 mt-2">
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="own" 
-                        {...register('housingStatus')} 
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">Own</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="rent" 
-                        {...register('housingStatus')} 
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">Rent</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Pet Experience */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Pet Experience</h2>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Have you owned pets before or do you currently have pets?
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <div className="flex space-x-4 mt-2">
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="true" 
-                        {...register('hasOwnedPetsBefore')} 
-                        onChange={() => setValue('hasOwnedPetsBefore', true)}
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">Yes</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="false" 
-                        {...register('hasOwnedPetsBefore')} 
-                        onChange={() => setValue('hasOwnedPetsBefore', false)}
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">No</span>
-                    </label>
-                  </div>
-                  {errors.hasOwnedPetsBefore && (
-                    <p className="mt-1 text-sm text-red-600">{errors.hasOwnedPetsBefore.message}</p>
-                  )}
-                </div>
-                
-                {hasOwnedPetsBefore && (
-                  <TextArea
-                    label="Tell us about your current pets or past pet experience"
-                    {...register('currentPets')}
-                    error={errors.currentPets?.message}
-                    placeholder="Species, breed, age, how long you've had them, etc."
-                    required={hasOwnedPetsBefore}
-                    rows={4}
-                  />
-                )}
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you have children in your home?
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <div className="flex space-x-4 mt-2">
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="true" 
-                        {...register('hasChildren')} 
-                        onChange={() => setValue('hasChildren', true)}
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">Yes</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        value="false" 
-                        {...register('hasChildren')} 
-                        onChange={() => setValue('hasChildren', false)}
-                        className="form-radio h-4 w-4 text-primary"
-                      />
-                      <span className="ml-2">No</span>
-                    </label>
-                  </div>
-                  {errors.hasChildren && (
-                    <p className="mt-1 text-sm text-red-600">{errors.hasChildren.message}</p>
-                  )}
-                </div>
-                
-                {hasChildren && (
-                  <Input
-                    label="Ages of children in your home"
-                    {...register('childrenAges')}
-                    error={errors.childrenAges?.message}
-                    required={hasChildren}
-                  />
-                )}
-                
-                <Input
-                  label="What is your typical work schedule?"
-                  {...register('workSchedule')}
-                  error={errors.workSchedule?.message}
-                  placeholder="E.g., Monday-Friday 9am-5pm, work from home, etc."
-                  required
-                />
-                
-                <Select
-                  label="Your activity level"
-                  {...register('activityLevel')}
-                  options={activityOptions}
-                  error={errors.activityLevel?.message}
-                  required
-                />
-                
-                <TextArea
-                  label="Why do you want to adopt this animal?"
-                  {...register('whyAdopt')}
-                  error={errors.whyAdopt?.message}
-                  placeholder="Please tell us why you're interested in adopting and what you're looking for in a pet."
-                  required
-                  rows={5}
-                />
-              </div>
-            </div>
-            
-            {/* Agreement */}
-            <div className="mb-8">
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
-                  <input
-                    id="agreeTerms"
-                    type="checkbox"
-                    {...register('agreeTerms')}
-                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label htmlFor="agreeTerms" className="font-medium text-gray-700">
-                    I agree to the terms and conditions
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <p className="text-gray-500">
-                    I certify that all information provided is true and accurate. I understand that submitting this application does not guarantee adoption.
-                  </p>
-                  {errors.agreeTerms && (
-                    <p className="mt-1 text-sm text-red-600">{errors.agreeTerms.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Submission */}
-            <div className="flex justify-between">
-              <Link to="/animals">
-                <Button variant="outline" type="button">Cancel</Button>
-              </Link>
-              <Button variant="primary" type="submit">Submit Application</Button>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
+
+      {/* Show existing adoption requests */}
+      {userAdoptionRequests.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Your Adoption Requests</h2>
+          <Card>
+            <CardBody className="p-0">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Animal</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Species</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NGO</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested On</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {userAdoptionRequests.map((request) => (
+                    <tr key={request.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {request.animal.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.animal.species}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.animal.ngo.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${request.status === 'PENDING' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : request.status === 'APPROVED' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'}`}>
+                          {request.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(request.requestedAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AdoptionForm; 
+export default AdoptionForm;

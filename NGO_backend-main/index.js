@@ -14,9 +14,10 @@ import userDetails from './routes/user.router.js';
 import ngoRouter from './routes/ngo.router.js';
 import emergencyRouter from './routes/emergency.router.js';
 import subscriptionRouter from './routes/subscription.routes.js';
-// import donationRouter from './routes/donation.router.js';
-// import adoptionRouter from './routes/adoption.router.js';
+import adoptionRouter from './routes/adoption.router.js';
+import animalRouter from './routes/animal.router.js';
 import userRoutes from './routes/user.routes.js';
+// import donationRouter from './routes/donation.router.js';
 
 dotenv.config();
 
@@ -55,8 +56,9 @@ app.use('/api/ngos', ngoRouter);
 app.use('/api/emergencies', emergencyRouter);
 app.use('/api/subscriptions', subscriptionRouter);
 app.use('/api/users', userRoutes);
+app.use('/api/adoptions', adoptionRouter);
+app.use('/api/animals', animalRouter);
 // app.use('/api/donations', donationRouter);
-// app.use('/api/adoptions', adoptionRouter);
 
 
 app.use(errorHandler); 

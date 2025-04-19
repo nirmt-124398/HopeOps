@@ -6,7 +6,6 @@ import * as yup from 'yup';
 import Card, { CardBody, CardHeader } from '../components/ui/Card';
 import Input, { Select, TextArea } from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import UnderDevelopment from '../components/common/UnderDevelopment';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -77,10 +76,9 @@ const DonationPage = () => {
 
   return (
     <div>
-      <UnderDevelopment/>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Support Our Mission</h1>
-        <p className="text-gray-600 max-w-3xl">
+        <p className="text-gray-600 ">
           Your generous donation helps us rescue, rehabilitate, and rehome animals in need.
           Every contribution, no matter the size, makes a difference in the lives of these animals.
         </p>

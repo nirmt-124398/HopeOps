@@ -32,6 +32,7 @@ import { rescueOngoingLoader } from "./loaders/rescueOngoingLoader";
 import { rescueCompletedLoader } from "./loaders/rescueCompletedLoader";
 import SubscriptionPlans from "./components/SubscriptionPlans";
 import CreateNGO from "./components/CreateNGO";
+import UserAdoptionRequests from "./pages/UserAdoptionRequests";
 
 // Add smooth scrolling
 const styles = {
@@ -84,6 +85,14 @@ const RoutesWrapper = () => {
       />
       <Route
         path="/animals/:id"
+        element={
+          <PageWrapper>
+            <AnimalDetails />
+          </PageWrapper>
+        }
+      />
+      <Route
+        path="/animal/:id"
         element={
           <PageWrapper>
             <AnimalDetails />
@@ -204,6 +213,16 @@ const RoutesWrapper = () => {
             <PageWrapper>
               <CreateNGO />
             </PageWrapper>
+        }
+      />
+      <Route
+        path="/my-adoptions"
+        element={
+          <ProtectedRoute>
+            <PageWrapper>
+              <UserAdoptionRequests />
+            </PageWrapper>
+          </ProtectedRoute>
         }
       />
     </Routes>
