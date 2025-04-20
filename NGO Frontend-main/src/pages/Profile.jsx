@@ -5,6 +5,7 @@ import apiRequest from '../utils/apifile';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
+import UserDonations from '../components/user/UserDonations';
 
 const Profile = () => {
   const { user, updateUser, logout } = useAuth();
@@ -281,6 +282,9 @@ const Profile = () => {
           </>
         )}
       </Card>
+      <div className="mt-8">
+        <UserDonations />
+      </div>
     </div>
   );
 };

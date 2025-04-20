@@ -112,27 +112,30 @@ model Subscription {
 }
 
 model Donation {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  amount       Float
-  user         User           @relation(fields: [userId], references: [id])
-  userId       String         @db.ObjectId
-  ngo          NGO            @relation(fields: [ngoId], references: [id])
-  ngoId        String         @db.ObjectId
-  paymentId    String         // Razorpay payment ID
-  paymentMethod PaymentMethod
-  status       PaymentStatus  @default(PENDING)
-  receiptUrl   String?        // CDN URL
-  createdAt    DateTime       @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @unique
+  paymentId String   // No longer optional - will use "pending" as temp value
+  amount    Int
+  currency  String
+  donorName String
+  email     String?
+  purpose   String   @default("General")
+  comment   String?
+  status    String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  receipt   String
+  paidAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // Indexes
-  @@index([userId, ngoId])
+  // Optional relation to User if the donor was logged in
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+  
+  // Optional relation to NGO if donation is for a specific NGO
+  ngo       NGO?     @relation(fields: [ngoId], references: [id])
+  ngoId     String?  @db.ObjectId
 }
 
-enum PaymentMethod {
-  UPI
-  CARD
-  NETBANKING
-}
 
 model Emergency {
   id          String             @id @default(auto()) @map("_id") @db.ObjectId

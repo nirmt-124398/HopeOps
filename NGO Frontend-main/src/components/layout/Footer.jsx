@@ -52,15 +52,11 @@ const Footer = () => {
     contact: {
       title: "Contact Us",
       details: {
-        address: "New Satguru Nagar, Lohara, Ludhiana-141016 (Punjab)",
-        phone: "7528993358",
-        email: "critical2315@gmail.com"
+        address: "Old Madhopuri Ludhiana-141008 (Punjab)",
+        phone: "9814404651",
+        email: "nirmitrampal@gmail.com"
       }
     },
-    newsletter: {
-      title: "Newsletter",
-      description: "Subscribe to our newsletter for updates on our animals and events."
-    }
   };
 
   return (
@@ -71,7 +67,7 @@ const Footer = () => {
       transition={{ duration: 0.5 }}
     >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* About Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -130,31 +126,6 @@ const Footer = () => {
               <p>Phone: {footerSections.contact.details.phone}</p>
               <p>Email: {footerSections.contact.details.email}</p>
             </address>
-          </motion.div>
-
-          {/* Newsletter Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <h3 className="text-xl font-bold mb-4">{footerSections.newsletter.title}</h3>
-            <p className="mb-4">{footerSections.newsletter.description}</p>
-            <form className="flex">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="px-4 py-2 w-full rounded-l focus:outline-none text-gray-800"
-              />
-              <motion.button
-                type="submit"
-                className="bg-secondary text-white px-4 py-2 rounded-r hover:bg-opacity-90 transition"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Subscribe
-              </motion.button>
-            </form>
           </motion.div>
         </div>
 

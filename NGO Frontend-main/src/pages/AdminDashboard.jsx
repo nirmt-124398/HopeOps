@@ -8,6 +8,7 @@ import { mockAdoptions, mockIncidents, mockDonations } from '../utils/mockData';
 import Input, { TextArea, Select } from '../components/ui/Input';
 import apiRequest from '../utils/apifile.js';
 import AdoptionManagement from '../components/admin/AdoptionManagement';
+import DonationManagement from '../components/admin/DonationManagement';
 
 // Define a fallback image as a data URL to avoid network requests
 const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23cccccc'/%3E%3Cpath d='M40,35 C35.5817,35 32,38.5817 32,43 C32,47.4183 35.5817,51 40,51 C44.4183,51 48,47.4183 48,43 C48,38.5817 44.4183,35 40,35 Z M25,33 L35,33 L35,30 L45,30 L45,33 L55,33 C56.6568,33 58,34.3432 58,36 L58,64 C58,65.6568 56.6568,67 55,67 L25,67 C23.3432,67 22,65.6568 22,64 L22,36 C22,34.3432 23.3432,33 25,33 Z' fill='%23666666'/%3E%3C/svg%3E";
@@ -659,10 +660,7 @@ const AdminIncidents = () => (
 );
 
 const AdminDonations = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-gray-800 mb-6">Donation Management</h1>
-    <p>View and track donations received.</p>
-  </div>
+  <DonationManagement />
 );
 
 export default AdminDashboard;

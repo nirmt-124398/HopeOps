@@ -33,6 +33,7 @@ import { rescueCompletedLoader } from "./loaders/rescueCompletedLoader";
 import SubscriptionPlans from "./components/SubscriptionPlans";
 import CreateNGO from "./components/CreateNGO";
 import UserAdoptionRequests from "./pages/UserAdoptionRequests";
+import UserDonationsPage from "./pages/UserDonationsPage";
 
 // Add smooth scrolling
 const styles = {
@@ -221,6 +222,16 @@ const RoutesWrapper = () => {
           <ProtectedRoute>
             <PageWrapper>
               <UserAdoptionRequests />
+            </PageWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-donations"
+        element={
+          <ProtectedRoute>
+            <PageWrapper>
+              <UserDonationsPage />
             </PageWrapper>
           </ProtectedRoute>
         }

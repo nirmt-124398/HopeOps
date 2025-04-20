@@ -6,6 +6,8 @@ import * as yup from 'yup';
 import Card, { CardBody, CardHeader } from '../components/ui/Card';
 import Input, { Select, TextArea } from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import apiRequest from '../utils/apifile.js';
+import { useAuth } from '../context/AuthContext';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -13,31 +15,26 @@ const schema = yup.object().shape({
   donorName: yup.string().required('Name is required'),
   email: yup.string().email('Invalid email format').required('Email is required'),
   donationType: yup.string().required('Please select donation type'),
-  paymentMethod: yup.string().required('Please select payment method'),
-  isRecurring: yup.boolean(),
-  frequency: yup.string().when('isRecurring', {
-    is: true,
-    then: yup.string().required('Please select frequency for recurring donation')
-  }),
+  comment: yup.string().optional(),
 });
 
 const DonationPage = () => {
   const [selectedAmount, setSelectedAmount] = useState(50);
   const [isCustomAmount, setIsCustomAmount] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       amount: 50,
+      donorName: user?.username || '',
+      email: user?.email || '',
       donationType: 'general',
-      paymentMethod: 'card',
-      isRecurring: false,
-      frequency: 'monthly'
+      comment: ''
     }
   });
-  
-  // Watch for values that affect conditional fields
-  const isRecurring = watch('isRecurring');
   
   const handleAmountSelect = (amount) => {
     setSelectedAmount(amount);
@@ -51,12 +48,92 @@ const DonationPage = () => {
     setValue('amount', e.target.value ? parseFloat(e.target.value) : '');
   };
   
-  const onSubmit = (data) => {
-    // In a real app, you would redirect to payment gateway
-    console.log('Donation form submitted:', data);
-    
-    // Redirect to the payment form page
-    window.location.href = `/payment?amount=${data.amount}&name=${data.donorName}&email=${data.email}&type=${data.donationType}&recurring=${data.isRecurring}`;
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get token from localStorage if available
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Step 1: Create Razorpay order
+      const orderResponse = await apiRequest.post('/donations/order', {
+        donationAmount: data.amount,
+        donorName: data.donorName,
+        email: data.email,
+        purpose: data.donationType,
+        comment: data.comment
+      }, { 
+        headers,
+        withCredentials: true 
+      });
+      
+      // Step 2: Open Razorpay checkout
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderResponse.data.amount, // amount is already in paise
+        currency: orderResponse.data.currency,
+        name: "HopeOps NGO Platform",
+        description: `${data.donationType.charAt(0).toUpperCase() + data.donationType.slice(1)} Donation`,
+        order_id: orderResponse.data.order_id,
+        prefill: {
+          name: data.donorName,
+          email: data.email
+        },
+        handler: async function(response) {
+          try {
+            // Step 3: Verify payment
+            const verifyResponse = await apiRequest.post('/donations/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            }, {
+              withCredentials: true
+            });
+            
+            // Reset loading state
+            setLoading(false);
+            
+            // Show success message
+            alert('Thank you for your donation! Your contribution will help our mission.');
+            
+            // Redirect to donation history page for logged in users or homepage for guests
+            if (user) {
+              window.location.href = '/my-donations';
+            } else {
+              window.location.href = '/';
+            }
+            
+          } catch (err) {
+            console.error('Payment verification failed:', err);
+            setError('Payment verification failed. Please contact support.');
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          },
+          escape: false,
+          confirm_close: true
+        },
+        theme: {
+          color: "#3B82F6" // Using tailwind primary blue color
+        }
+      };
+      
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      
+    } catch (err) {
+      console.error('Error initiating donation:', err);
+      setError(err.response?.data?.error || 'Failed to process donation. Please try again.');
+      setLoading(false);
+    }
   };
 
   const donationTypeOptions = [
@@ -66,24 +143,18 @@ const DonationPage = () => {
     { value: 'shelter', label: 'Shelter Improvements' },
     { value: 'rescue', label: 'Rescue Operations' },
   ];
-  
-  const frequencyOptions = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'quarterly', label: 'Quarterly' },
-    { value: 'annually', label: 'Annually' },
-  ];
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Support Our Mission</h1>
-        <p className="text-gray-600 ">
+        <p className="text-gray-600">
           Your generous donation helps us rescue, rehabilitate, and rehome animals in need.
           Every contribution, no matter the size, makes a difference in the lives of these animals.
         </p>
       </div>
       
+      {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column - Impact Information */}
         <div className="lg:col-span-1">
@@ -141,16 +212,6 @@ const DonationPage = () => {
                   </div>
                 </div>
               </div>
-              
-              <div className="mt-8 p-4 bg-gray-50 rounded-md">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Monthly Giving</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Consider making a recurring monthly donation to provide consistent support to our animal care programs.
-                </p>
-                <Link to="#recurring-donation" onClick={() => setValue('isRecurring', true)}>
-                  <Button variant="secondary" size="sm" className="w-full">Become a Monthly Donor</Button>
-                </Link>
-              </div>
             </CardBody>
           </Card>
         </div>
@@ -159,6 +220,12 @@ const DonationPage = () => {
         <div className="lg:col-span-2">
           <Card>
             <CardBody>
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                  {error}
+                </div>
+              )}
+              
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Donation Amount */}
                 <div>
@@ -214,11 +281,6 @@ const DonationPage = () => {
                       error={errors.email?.message}
                       required
                     />
-                    
-                    <Input
-                      label="Phone (Optional)"
-                      {...register('phone')}
-                    />
                   </div>
                 </div>
                 
@@ -235,37 +297,6 @@ const DonationPage = () => {
                       required
                     />
                     
-                    <div id="recurring-donation">
-                      <div className="flex items-start mb-4">
-                        <div className="flex items-center h-5">
-                          <input
-                            id="isRecurring"
-                            type="checkbox"
-                            {...register('isRecurring')}
-                            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                          />
-                        </div>
-                        <div className="ml-3 text-sm">
-                          <label htmlFor="isRecurring" className="font-medium text-gray-700">
-                            Make this a recurring donation
-                          </label>
-                          <p className="text-gray-500">
-                            Your donation will be automatically processed on a regular basis
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {isRecurring && (
-                        <Select
-                          label="Frequency"
-                          {...register('frequency')}
-                          options={frequencyOptions}
-                          error={errors.frequency?.message}
-                          required={isRecurring}
-                        />
-                      )}
-                    </div>
-                    
                     <TextArea
                       label="Comment (Optional)"
                       {...register('comment')}
@@ -275,66 +306,24 @@ const DonationPage = () => {
                   </div>
                 </div>
                 
-                {/* Payment Method Selection - will be handled on the next page */}
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Method</h2>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <label className={`
-                      flex items-center justify-center p-4 border rounded-md cursor-pointer
-                      ${watch('paymentMethod') === 'card' 
-                        ? 'bg-primary text-white border-primary' 
-                        : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
-                    `}>
-                      <input
-                        type="radio"
-                        value="card"
-                        {...register('paymentMethod')}
-                        className="sr-only"
-                      />
-                      <span>Credit/Debit Card</span>
-                    </label>
-                    
-                    <label className={`
-                      flex items-center justify-center p-4 border rounded-md cursor-pointer
-                      ${watch('paymentMethod') === 'upi' 
-                        ? 'bg-primary text-white border-primary' 
-                        : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
-                    `}>
-                      <input
-                        type="radio"
-                        value="upi"
-                        {...register('paymentMethod')}
-                        className="sr-only"
-                      />
-                      <span>UPI</span>
-                    </label>
-                    
-                    <label className={`
-                      flex items-center justify-center p-4 border rounded-md cursor-pointer
-                      ${watch('paymentMethod') === 'netbanking' 
-                        ? 'bg-primary text-white border-primary' 
-                        : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
-                    `}>
-                      <input
-                        type="radio"
-                        value="netbanking"
-                        {...register('paymentMethod')}
-                        className="sr-only"
-                      />
-                      <span>Net Banking</span>
-                    </label>
-                  </div>
-                  
-                  {errors.paymentMethod && (
-                    <p className="mt-1 text-sm text-red-600">{errors.paymentMethod.message}</p>
-                  )}
-                </div>
-                
                 {/* Submission */}
                 <div className="pt-4">
-                  <Button variant="primary" type="submit" size="lg" fullWidth>
-                    Donate ₹{watch('amount') || 0}
+                  <Button 
+                    variant="primary" 
+                    type="submit" 
+                    size="lg" 
+                    fullWidth
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </div>
+                    ) : `Donate ₹${watch('amount') || 0}`}
                   </Button>
                   
                   <p className="mt-4 text-sm text-gray-500 text-center">
@@ -350,4 +339,4 @@ const DonationPage = () => {
   );
 };
 
-export default DonationPage; 
+export default DonationPage;

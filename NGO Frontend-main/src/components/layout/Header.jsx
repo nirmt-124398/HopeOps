@@ -37,8 +37,7 @@ const Header = () => {
   ];
 
   const userNavItems = [
-    { path: '/profile', label: 'My Profile', show: true },
-    { path: '/ngo/profile', label: 'NGO Profile', show: user?.role === 'NGO_ADMIN' },
+    { path: '/profile', label: 'My Profile', show: true }
   ];
 
   const adminNavItems = [
@@ -121,6 +120,12 @@ const Header = () => {
                       </Link>
                     )
                   ))}
+                  <Link 
+                    to="/my-donations" 
+                    className="block px-4 py-3 text-gray-800 hover:bg-gray-100"
+                  >
+                    My Donations
+                  </Link>
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100"
@@ -217,6 +222,13 @@ const Header = () => {
                         </Link>
                       )
                     ))}
+                    <Link 
+                      to="/my-donations" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      My Donations
+                    </Link>
                     <button 
                       onClick={() => {
                         handleLogout();

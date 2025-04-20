@@ -17,7 +17,7 @@ import subscriptionRouter from './routes/subscription.routes.js';
 import adoptionRouter from './routes/adoption.router.js';
 import animalRouter from './routes/animal.router.js';
 import userRoutes from './routes/user.routes.js';
-// import donationRouter from './routes/donation.router.js';
+import donationRouter from './routes/donation.router.js';
 
 dotenv.config();
 
@@ -58,11 +58,9 @@ app.use('/api/subscriptions', subscriptionRouter);
 app.use('/api/users', userRoutes);
 app.use('/api/adoptions', adoptionRouter);
 app.use('/api/animals', animalRouter);
-// app.use('/api/donations', donationRouter);
-
+app.use('/api/donations', donationRouter);
 
 app.use(errorHandler); 
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
