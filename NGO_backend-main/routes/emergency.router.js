@@ -16,6 +16,9 @@ const router = express.Router();
 // Public route: list emergencies
 router.get('/', listEmergencies);
 
+// Added correct route for pending emergencies (moved before the parameterized route)
+router.get('/pending', verifyToken, requireRole('NGO_ADMIN'), listPendingEmergencies);
+
 // User route: create emergency and check status (requires authentication)
 router.post('/', verifyToken, createEmergency);
 router.get('/:EmergencyId', verifyToken, getEmergencyStatus);
@@ -23,10 +26,7 @@ router.get('/:EmergencyId', verifyToken, getEmergencyStatus);
 // NGO Admin route: respond to emergency (requires NGO_ADMIN role)
 router.post('/:EmergencyId/respond', verifyToken, requireRole('NGO_ADMIN'), respondToEmergency);
 
-// New route: Update emergency response status (requires NGO_ADMIN role)
+// Update emergency response status (requires NGO_ADMIN role)
 router.patch('/:emergencyId/response/:responseId', verifyToken, requireRole('NGO_ADMIN'), updateEmergencyResponseStatus);
-
-// New route: List pending emergencies (requires NGO_ADMIN role)
-router.get('/emergencies/pending', verifyToken, requireRole('NGO_ADMIN'), listPendingEmergencies);
 
 export default router;

@@ -115,7 +115,6 @@ const IncidentReporting = () => {
       const response = await apiRequest.post('/emergencies', emergencyData);
       
       // Handle successful response
-      console.log('Emergency reported:', response.data);
       setSubmitted(true);
       
       // Redirect to home after short delay

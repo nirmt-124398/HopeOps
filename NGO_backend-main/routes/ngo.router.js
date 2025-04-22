@@ -1,10 +1,11 @@
 // routes/ngo.js
 import express from 'express';
-import { 
-  createNGO, 
+import {
+  createNGO,
   updateNGO,
   getNGODashboard,
-  listAllNGOs
+  listAllNGOs,
+  getData
 } from '../controllers/ngo.controller.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
 import { createNGOSchema, updateNGOSchema, validateRequest } from '../middleware/validators.js';
@@ -16,7 +17,8 @@ router.get('/', listAllNGOs);
 
 // Protected routes
 router.post('/', verifyToken, validateRequest(createNGOSchema), createNGO);
-router.put('/:id', verifyToken, requireRole('NGO_ADMIN'), validateRequest(updateNGOSchema), updateNGO);
+router.put('/:id', verifyToken, requireRole('NGO_ADMIN'), updateNGO);
 router.get('/dashboard/:id', verifyToken, requireRole('NGO_ADMIN'), getNGODashboard);
+router.get('/dashboard', verifyToken, requireRole('NGO_ADMIN'), getData);
 
 export default router;

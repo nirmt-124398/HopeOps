@@ -412,3 +412,41 @@ export const getNGODashboard = async (req, res) => {
         });
     }
 };
+
+export const getData = async (req, res) => {
+    // Find user id by req.user
+    const userId = req.user;
+
+    try {
+        // Check if the user is an NGO admin
+        const ngoAdmin = await prisma.NGOAdmin.findFirst({
+            where: {
+                userId: userId,
+            },
+            include: {
+                ngo: true,
+            },
+        });
+
+        if (!ngoAdmin) {
+            return res.status(403).json({ message: "User is not an NGO admin" });
+        }
+
+        // Fetch data for the NGO
+        const ngoData = await prisma.NGO.findUnique({
+            where: { id: ngoAdmin.ngoId },
+            include: {
+                admins: true,
+                subscription: true,
+                donations: true,
+                animals: true,
+                emergencies: true,
+            },
+        });
+
+        res.status(200).json(ngoData);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).json({ message: "Error in file: ngo.controller.js ( getData )" });
+    }
+}

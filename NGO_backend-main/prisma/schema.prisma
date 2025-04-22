@@ -142,7 +142,7 @@ model Emergency {
   user        User               @relation(fields: [userId], references: [id])
   userId      String             @db.ObjectId
   location    Json               // { lat: number, lng: number }
-  description String
+  description Json               // Changed from String to Json to handle structured data
   status      EmergencyStatus    @default(PENDING)
   responses   EmergencyResponse[]
   createdAt   DateTime           @default(now())

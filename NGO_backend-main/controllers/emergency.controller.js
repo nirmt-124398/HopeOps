@@ -5,7 +5,18 @@ export const listEmergencies = async (req, res) => {
     try {
         const emergencies = await prisma.emergency.findMany({
             include: {
-                responses: true,  // Optionally include responses for context
+                responses: {
+                    include: {
+                        ngo: {
+                            select: {
+                                id: true,
+                                name: true,
+                                contactEmail: true,
+                                phone: true
+                            }
+                        }
+                    }
+                },  // Include responses with NGO details
                 user: {           // Include user who created the emergency
                     select: {
                         id: true,
@@ -19,7 +30,7 @@ export const listEmergencies = async (req, res) => {
         return res.status(200).json(emergencies);
     } catch (error) {
         console.error("Error listing emergencies:", error);
-        return res.status(500).json({ error: "Error fetching emergencies" });
+        return res.status(500).json({ error: "Error fetching emergencies", details: error.message });
     }
 };
 
@@ -31,7 +42,18 @@ export const listPendingEmergencies = async (req, res) => {
                 status: 'PENDING'
             },
             include: {
-                responses: true,
+                responses: {
+                    include: {
+                        ngo: {
+                            select: {
+                                id: true,
+                                name: true,
+                                contactEmail: true,
+                                phone: true
+                            }
+                        }
+                    }
+                },
                 user: {
                     select: {
                         id: true,
@@ -45,7 +67,7 @@ export const listPendingEmergencies = async (req, res) => {
         return res.status(200).json(pendingEmergencies);
     } catch (error) {
         console.error("Error listing pending emergencies:", error);
-        return res.status(500).json({ error: "Error fetching pending emergencies" });
+        return res.status(500).json({ error: "Error fetching pending emergencies", details: error.message });
     }
 };
 
@@ -67,14 +89,25 @@ export const createEmergency = async (req, res) => {
                 error: "Location must include latitude and longitude coordinates"
             });
         }
+        
+        // Validate description - ensure it's a valid object
+        // If description is a string, try to parse it as JSON, otherwise use it directly
+        let descriptionData = description;
+        if (typeof description === 'string') {
+            try {
+                descriptionData = JSON.parse(description);
+            } catch (e) {
+                // If it's not valid JSON, convert it to a simple object
+                descriptionData = { mainDescription: description };
+            }
+        }
  
         // Create the emergency record
         const emergency = await prisma.emergency.create({
             data: {
                 user: { connect: { id: userId } },
                 location, // Store the location as JSON { lat: number, lng: number }
-                description,
-
+                description: descriptionData, // Now storing as JSON
             },
             include: {
                 user: {
@@ -94,7 +127,7 @@ export const createEmergency = async (req, res) => {
         });
     } catch (error) {
         console.error("Error creating emergency:", error);
-        return res.status(500).json({ error: "Failed to report emergency" });
+        return res.status(500).json({ error: "Failed to report emergency", details: error.message });
     }
 };
 
@@ -131,7 +164,7 @@ export const getEmergencyStatus = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching emergency status:", error);
-        return res.status(500).json({ error: "Error fetching emergency status" });
+        return res.status(500).json({ error: "Error fetching emergency status", details: error.message });
 
     }
 };
@@ -149,7 +182,6 @@ async function diagnoseNGOAdminIssue(userId) {
                 ngoAdmins: true
             }
         });
-        console.log("User details:", user);
 
         // Check NGO Admin records
         const ngoAdminRecords = await prisma.NGOAdmin.findMany({
@@ -158,7 +190,6 @@ async function diagnoseNGOAdminIssue(userId) {
                 ngo: true
             }
         });
-        console.log("NGO Admin records:", ngoAdminRecords);
 
         return { user, ngoAdminRecords };
     } catch (error) {
@@ -174,21 +205,9 @@ export const respondToEmergency = async (req, res) => {
         const { status, notes } = req.body;
         const userId = req.user;
 
-        // Log incoming request for debugging
-        console.log("Emergency response request:", {
-            EmergencyId,
-            requestBody: req.body,
-            userId
-        });
-
-        // Run diagnostics
-        const diagnosis = await diagnoseNGOAdminIssue(userId);
-        console.log("Diagnostic results:", diagnosis);
-
-        // Add this debug check
-        console.log("User Role:", req.userRole);
-        if (req.userRole !== 'NGO_ADMIN') {
-            return res.status(403).json({ error: "Only NGO admins can respond to emergencies" });
+        // Allow both NGO_ADMIN and SUPER_ADMIN roles to respond
+        if (req.userRole !== 'NGO_ADMIN' && req.userRole !== 'SUPER_ADMIN') {
+            return res.status(403).json({ error: "Only NGO admins or super admins can respond to emergencies" });
         }
 
         // Validate inputs
@@ -231,9 +250,6 @@ export const respondToEmergency = async (req, res) => {
         }
 
         // Check if this NGO has already responded to this emergency
-        console.log("User ID for lookup:", userId);
-        console.log("Searching for NGO Admin with userId:", userId);
-
         let ngoAdmin = await prisma.NGOAdmin.findFirst({
             where: {
                 userId: userId
@@ -250,43 +266,72 @@ export const respondToEmergency = async (req, res) => {
             }
         });
 
-        console.log("NGO Admin lookup result:", ngoAdmin);
-
         if (!ngoAdmin) {
-            console.log("Looking for verified NGOs...");
-
+            // Find a default NGO for SUPER_ADMIN users or when no NGO association exists
             const verifiedNGO = await prisma.NGO.findFirst({
                 where: {
                     status: 'VERIFIED'
                 }
             });
 
-            console.log("Verified NGO found:", verifiedNGO);
-
+            // If no verified NGO exists, try to get any NGO
             if (!verifiedNGO) {
-                return res.status(403).json({ 
-                    error: "No verified NGO found. Please contact an administrator." 
-                });
-            }
-
-            try {
-                // Create NGO Admin association
-                ngoAdmin = await prisma.NGOAdmin.create({
-                    data: {
-                        user: { connect: { id: userId } },
-                        ngo: { connect: { id: verifiedNGO.id } }
-                    },
-                    include: {
-                        ngo: true
-                    }
-                });
-
-                console.log("Successfully created NGO Admin association:", ngoAdmin);
-            } catch (error) {
-                console.error("Error creating NGO Admin association:", error);
-                return res.status(403).json({ 
-                    error: "Failed to create NGO association. Please contact an administrator." 
-                });
+                const anyNGO = await prisma.NGO.findFirst();
+                
+                if (!anyNGO) {
+                    // If no NGOs exist at all, create a default system NGO
+                    const systemNGO = await prisma.NGO.create({
+                        data: {
+                            name: "HopeOps Central",
+                            description: "System default NGO for administrative responses",
+                            contactEmail: "admin@hopeops.com",
+                            status: "VERIFIED",
+                            website: "https://hopeops.com",
+                            phone: "123-456-7890",
+                            address: "123 Admin Street, System City"
+                        }
+                    });
+                    
+                    // Create an NGO Admin association with the system NGO
+                    ngoAdmin = await prisma.NGOAdmin.create({
+                        data: {
+                            user: { connect: { id: userId } },
+                            ngo: { connect: { id: systemNGO.id } }
+                        },
+                        include: {
+                            ngo: true
+                        }
+                    });
+                } else {
+                    // Use any available NGO
+                    ngoAdmin = await prisma.NGOAdmin.create({
+                        data: {
+                            user: { connect: { id: userId } },
+                            ngo: { connect: { id: anyNGO.id } }
+                        },
+                        include: {
+                            ngo: true
+                        }
+                    });
+                }
+            } else {
+                try {
+                    // Create NGO Admin association with the verified NGO
+                    ngoAdmin = await prisma.NGOAdmin.create({
+                        data: {
+                            user: { connect: { id: userId } },
+                            ngo: { connect: { id: verifiedNGO.id } }
+                        },
+                        include: {
+                            ngo: true
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error creating NGO Admin association:", error);
+                    return res.status(403).json({ 
+                        error: "Failed to create NGO association. Please contact an administrator." 
+                    });
+                }
             }
         }
 
@@ -339,7 +384,6 @@ export const respondToEmergency = async (req, res) => {
         // Only add notes if they're provided
         if (notes !== undefined && notes !== null) {
             responseData.notes = notes;
-            console.log("Adding notes to response:", notes);
         }
 
         // Create the response record - will now reference the updated emergency
@@ -374,12 +418,12 @@ export const respondToEmergency = async (req, res) => {
 /**
  * Update the status of an emergency response
  * @route PATCH /api/emergencies/:emergencyId/response/:responseId
- * @access Private (NGO_ADMIN only)
+ * @access Private (NGO_ADMIN and SUPER_ADMIN only)
  */
 export const updateEmergencyResponseStatus = async (req, res) => {
     try {
         const { emergencyId, responseId } = req.params;
-        const { status } = req.body;
+        const { status, notes } = req.body;
         const userId = req.user;
 
         // Validate input
@@ -389,50 +433,82 @@ export const updateEmergencyResponseStatus = async (req, res) => {
             });
         }
 
-        if (!status || !['PENDING', 'ACCEPTED', 'REJECTED'].includes(status)) {
+        if (!status || !['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'].includes(status)) {
             return res.status(400).json({ 
-                error: "Valid status (PENDING, ACCEPTED, REJECTED) is required" 
+                error: "Valid status (PENDING, ACCEPTED, IN_PROGRESS, RESOLVED, REJECTED) is required" 
             });
         }
 
-        // Verify the NGO Admin status of the user
-        const ngoAdmin = await prisma.NGOAdmin.findFirst({
-            where: { userId },
-            include: { ngo: true }
+        // Get the user's role
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true }
         });
 
-        if (!ngoAdmin) {
-            return res.status(403).json({ 
-                error: "You must be an NGO Admin to update emergency responses" 
+        // Check if the user has permission (either NGO_ADMIN or SUPER_ADMIN)
+        const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+        
+        // If user is not a SUPER_ADMIN, verify they are an NGO_ADMIN with appropriate permissions
+        if (!isSuperAdmin) {
+            // Verify the NGO Admin status of the user
+            const ngoAdmin = await prisma.NGOAdmin.findFirst({
+                where: { userId },
+                include: { ngo: true }
             });
+
+            if (!ngoAdmin) {
+                return res.status(403).json({ 
+                    error: "You must be an NGO Admin or Super Admin to update emergency responses" 
+                });
+            }
+
+            // Check if the emergency response exists and belongs to the NGO
+            const emergencyResponse = await prisma.emergencyResponse.findFirst({
+                where: {
+                    id: responseId,
+                    emergencyId,
+                    ngoId: ngoAdmin.ngoId
+                }
+            });
+
+            if (!emergencyResponse) {
+                return res.status(404).json({ 
+                    error: "Emergency response not found or you don't have permission to update it" 
+                });
+            }
         }
 
-        // Check if the emergency response exists and belongs to the NGO
-        const emergencyResponse = await prisma.emergencyResponse.findFirst({
-            where: {
-                id: responseId,
-                emergencyId,
-                ngoId: ngoAdmin.ngoId
-            },
+        // Get the emergency response regardless of user type
+        const emergencyResponse = await prisma.emergencyResponse.findUnique({
+            where: { id: responseId },
             include: {
-                emergency: true
+                emergency: true,
+                ngo: true
             }
         });
 
         if (!emergencyResponse) {
             return res.status(404).json({ 
-                error: "Emergency response not found or you don't have permission to update it" 
+                error: "Emergency response not found" 
             });
         }
 
         // Update the emergency response status
+        const updateData = { status };
+        
+        // Add notes if provided
+        if (notes !== undefined && notes !== null) {
+            updateData.notes = notes;
+        }
+
+        // If accepting, set the acceptedAt timestamp
+        if (status === 'ACCEPTED') {
+            updateData.acceptedAt = new Date();
+        }
+
         const updatedResponse = await prisma.emergencyResponse.update({
             where: { id: responseId },
-            data: { 
-                status,
-                // If accepting, set the acceptedAt timestamp
-                ...(status === 'ACCEPTED' && { acceptedAt: new Date() })
-            },
+            data: updateData,
             include: {
                 emergency: true,
                 ngo: {
@@ -444,16 +520,11 @@ export const updateEmergencyResponseStatus = async (req, res) => {
             }
         });
 
-        // If the response is accepted, update the emergency status to ACCEPTED as well
-        if (status === 'ACCEPTED') {
-            await prisma.emergency.update({
-                where: { id: emergencyId },
-                data: { status: 'ACCEPTED' }
-            });
-        }
-
-        // If the response is rejected, keep the emergency as PENDING
-        // so other NGOs can respond
+        // Update the emergency status to match the response status
+        await prisma.emergency.update({
+            where: { id: emergencyId },
+            data: { status }
+        });
 
         return res.status(200).json({
             message: `Emergency response status updated to ${status}`,
