@@ -58,7 +58,7 @@ const Home = () => {
   return (
     <div className="overflow-hidden">
       {/* Hero Section with Glassmorphism and Progressive Blur */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[100vh] flex items-center overflow-hidden pt-24">
         {/* Background image with parallax effect */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-fixed z-0" 
@@ -78,7 +78,7 @@ const Home = () => {
         
         {/* Animated shapes in background */}
         <motion.div 
-          className="absolute -right-20 top-20 w-80 h-80 rounded-full bg-secondary/20 blur-3xl z-5"
+          className="absolute -right-20 top-40 w-80 h-80 rounded-full bg-secondary/20 blur-3xl z-5"
           animate={{ 
             x: [0, 30, 0],
             y: [0, 40, 0]
@@ -109,7 +109,7 @@ const Home = () => {
         />
 
         {/* Content */}
-        <div className="relative container mx-auto px-6 z-20 pt-28">
+        <div className="relative container mx-auto px-6 z-20 mt-12">
           <motion.div 
             className="max-w-3xl mx-auto text-center" 
             initial={{ opacity: 0, y: 30 }}
