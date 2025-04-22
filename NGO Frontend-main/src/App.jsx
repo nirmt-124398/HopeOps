@@ -35,12 +35,6 @@ import CreateNGO from "./components/CreateNGO";
 import UserAdoptionRequests from "./pages/UserAdoptionRequests";
 import UserDonationsPage from "./pages/UserDonationsPage";
 
-// Add smooth scrolling
-const styles = {
-  body: {
-    scrollBehavior: "smooth",
-  },
-};
 
 function App() {
   return (
@@ -86,14 +80,6 @@ const RoutesWrapper = () => {
       />
       <Route
         path="/animals/:id"
-        element={
-          <PageWrapper>
-            <AnimalDetails />
-          </PageWrapper>
-        }
-      />
-      <Route
-        path="/animal/:id"
         element={
           <PageWrapper>
             <AnimalDetails />

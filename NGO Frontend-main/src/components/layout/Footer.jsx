@@ -59,82 +59,182 @@ const Footer = () => {
     },
   };
 
+  // Animation variants
+  const containerVariant = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariant = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } }
+  };
+
   return (
     <motion.footer 
-      className="bg-primary text-white pt-12 pb-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      className="relative overflow-hidden bg-primary pt-16 pb-10 mt-20"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
     >
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      {/* Glassmorphism elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div 
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-secondary/10 blur-3xl"
+          animate={{ 
+            x: [0, 30, 0],
+            y: [0, -20, 0]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 20,
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-secondary/10 blur-3xl"
+          animate={{ 
+            x: [0, -20, 0],
+            y: [0, 30, 0]
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 15,
+            ease: "easeInOut" 
+          }}
+        />
+      </div>
+
+      {/* Footer Content */}
+      <div className="container mx-auto px-6 relative z-10">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-14"
+          variants={containerVariant}
+          initial="hidden"
+          animate="visible"
+        >
           {/* About Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center mb-4 mx-2">
-              <img src={logo} alt="Logo" className="h-10" />
-            </div>
-            <p className="mb-4">{footerSections.about.content}</p>
-            <div className="flex space-x-4">
-              {footerSections.about.socialLinks.map((link, index) => (
-                <motion.a
-                  key={index}
-                  href={link.url}
-                  className="hover:text-secondary"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {link.icon}
-                </motion.a>
-              ))}
+          <motion.div variants={itemVariant}>
+            <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-lg h-full">
+              <motion.div 
+                className="flex items-center mb-6"
+                whileHover={{ scale: 1.02 }}
+              >
+                <img src={logo} alt="Logo" className="h-12" />
+              </motion.div>
+              <p className="mb-6 text-white/90">{footerSections.about.content}</p>
+              <div className="flex space-x-5">
+                {footerSections.about.socialLinks.map((link, index) => (
+                  <motion.a
+                    key={index}
+                    href={link.url}
+                    className="text-white/80 hover:text-secondary transition-colors duration-300"
+                    whileHover={{ scale: 1.2, color: '#ffffff' }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    {link.icon}
+                  </motion.a>
+                ))}
+              </div>
             </div>
           </motion.div>
 
           {/* Quick Links Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-xl font-bold mb-4">{footerSections.quickLinks.title}</h3>
-            <ul className="space-y-2">
-              {footerSections.quickLinks.links.map((link, index) => (
-                <motion.li
-                  key={index}
-                  whileHover={{ x: 5 }}
-                >
-                  <Link to={link.path} className="hover:text-secondary">
-                    {link.label}
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
+          <motion.div variants={itemVariant}>
+            <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-lg h-full">
+              <h3 className="text-xl font-bold mb-6 text-white">{footerSections.quickLinks.title}</h3>
+              <ul className="space-y-3">
+                {footerSections.quickLinks.links.map((link, index) => (
+                  <motion.li
+                    key={index}
+                    whileHover={{ x: 5 }}
+                  >
+                    <Link 
+                      to={link.path} 
+                      className="flex items-center text-white/80 hover:text-secondary transition-colors duration-300"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4 mr-2" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M9 5l7 7-7 7" 
+                        />
+                      </svg>
+                      {link.label}
+                    </Link>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
           </motion.div>
 
           {/* Contact Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h3 className="text-xl font-bold mb-4">{footerSections.contact.title}</h3>
-            <address className="not-italic space-y-2">
-              <p>{footerSections.contact.details.address}</p>
-              <p>Phone: {footerSections.contact.details.phone}</p>
-              <p>Email: {footerSections.contact.details.email}</p>
-            </address>
+          <motion.div variants={itemVariant}>
+            <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/10 shadow-lg h-full">
+              <h3 className="text-xl font-bold mb-6 text-white">{footerSections.contact.title}</h3>
+              <address className="not-italic space-y-4 text-white/80">
+                <p className="flex items-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-secondary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>{footerSections.contact.details.address}</span>
+                </p>
+                <p className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span>{footerSections.contact.details.phone}</span>
+                </p>
+                <p className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>{footerSections.contact.details.email}</span>
+                </p>
+              </address>
+              
+              {/* Newsletter Subscription */}
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold mb-4 text-white">Subscribe to Our Newsletter</h4>
+                <form className="flex">
+                  <input 
+                    type="email" 
+                    placeholder="Your email" 
+                    className="bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-l-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-secondary flex-grow"
+                  />
+                  <motion.button 
+                    type="submit" 
+                    className="bg-secondary/80 hover:bg-secondary text-white rounded-r-full px-5 py-2"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Subscribe
+                  </motion.button>
+                </form>
+              </div>
+            </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Copyright */}
         <motion.div
-          className="mt-8 pt-8 border-t border-gray-700 text-center"
+          className="mt-14 pt-8 border-t border-white/10 text-center text-white/70"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
         >
           <p>&copy; {currentYear} HopeOps. All rights reserved.</p>
         </motion.div>
