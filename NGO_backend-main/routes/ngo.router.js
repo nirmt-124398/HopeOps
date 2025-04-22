@@ -8,7 +8,7 @@ import {
   getData
 } from '../controllers/ngo.controller.js';
 import { verifyToken, requireRole } from '../middleware/auth.js';
-import { createNGOSchema, updateNGOSchema, validateRequest } from '../middleware/validators.js';
+import { createNGOSchema, validateRequest } from '../middleware/validators.js';
 
 const router = express.Router();
 
