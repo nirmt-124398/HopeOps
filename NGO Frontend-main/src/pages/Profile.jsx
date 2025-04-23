@@ -282,7 +282,7 @@ const Profile = () => {
             </>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-3 p-6">
                 <h2 className="text-xl font-semibold">Account Details</h2>
                 <Button
                   variant="outline"
@@ -292,7 +292,7 @@ const Profile = () => {
                 </Button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 p-6">
                 <div className="flex items-center">
                   <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold mr-4">
                     {formData.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || '?'}

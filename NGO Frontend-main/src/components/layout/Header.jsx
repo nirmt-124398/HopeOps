@@ -45,7 +45,7 @@ const Header = () => {
     { path: '/animals', label: 'Animals' },
     { path: '/adopt', label: 'Adopt' },
     { path: '/donate', label: 'Donate' },
-    { path: '/subscription-plans', label: 'Pricing' },
+    ...(user?.role !== 'NGO_ADMIN' ? [{ path: '/subscription-plans', label: 'Pricing' }] : []),
   ];
 
   const actionNavItems = [
@@ -77,7 +77,7 @@ const Header = () => {
           <div className="flex justify-between items-center">
             {/* Left Side: Logo and Main Navigation */}
             <div className="flex items-center space-x-8">
-              <Link to="/" className="flex items-center relative z-10">
+              <Link to="/" className="flex items-center">
                 <motion.img 
                   src={logo} 
                   alt="Logo" 
