@@ -1,5 +1,5 @@
 import express from 'express';
-import { createSubscription, verifySubscription, fetchPlans } from '../controllers/subscription.controller.js';
+import { createSubscription, verifySubscription, fetchPlans,getSubscriptiondetailById } from '../controllers/subscription.controller.js';
 import { verifyToken } from '../middleware/auth.js';
 const router = express.Router();
 
@@ -17,4 +17,5 @@ router.post('/create', verifyToken, asyncHandler(createSubscription));
 // Verify subscription - Don't use verifyToken middleware here to allow callbacks
 router.post('/verify', asyncHandler(verifySubscription));
 
+router.get('/getSubscriptiondetailById/:subscriptionId', verifyToken, getSubscriptiondetailById);
 export default router;

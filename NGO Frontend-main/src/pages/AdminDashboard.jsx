@@ -315,6 +315,8 @@ const AdminOverview = () => {
         // Try to fetch NGO info if other data is loaded successfully
         try {
           const ngoAdminResponse = await apiRequest.get('/ngos/dashboard'); // This API returns comprehensive NGO data
+
+          const ngoSubscriptionResponse = await apiRequest.get(`/subscriptions/getSubscriptiondetailById/${ngoAdminResponse.data.subscriptionId}`);
           
           if (ngoAdminResponse.data) {
             // The API now returns a complete NGO object with all details directly
@@ -330,7 +332,8 @@ const AdminOverview = () => {
                 address: ngo.address,
                 website: ngo.website,
                 socialMedia: ngo.socialMedia || {}
-              }
+              },
+              subscription: ngoSubscriptionResponse.data.subscription
             });
             
             // We can also update the animals data if needed, since it's included in the response
@@ -517,19 +520,112 @@ const AdminOverview = () => {
                           {ngoData.subscription && (
                             <div>
                               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Subscription Details</h3>
-                              <div className="bg-gray-50 rounded-md p-3">
-                                <div className="flex items-center mb-2">
-                                  <div className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full mr-2">
-                                    {ngoData.subscription.status}
+                              <div className="bg-gray-50 rounded-md p-4">
+                                {/* Subscription Header with Status */}
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center">
+                                    <div className={`text-xs font-semibold px-2.5 py-0.5 rounded-full mr-2 ${
+                                      ngoData.subscription.status === 'active' 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {ngoData.subscription.status.toUpperCase()}
+                                    </div>
+                                    <p className="text-gray-700 text-sm font-medium">
+                                      Subscription
+                                    </p>
                                   </div>
-                                  <p className="text-gray-700 text-sm font-medium">
-                                    {ngoData.subscription.plan?.name || 'Standard Plan'}
-                                  </p>
+                                  
+                                  {ngoData.subscription.short_url && (
+                                    <a 
+                                      href={ngoData.subscription.short_url}
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-primary/90 transition-colors flex items-center"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                                        <path d="M5 5a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                                      </svg>
+                                      Manage
+                                    </a>
+                                  )}
                                 </div>
-                                <p className="text-gray-600 text-sm">
-                                  <span className="font-medium">Valid Until:</span>{' '}
-                                  {ngoData.subscription.endDate ? new Date(ngoData.subscription.endDate).toLocaleDateString() : 'N/A'}
-                                </p>
+                                
+                                {/* Subscription IDs */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 mb-3 text-sm border-b border-gray-200 pb-3">
+                                  <div>
+                                    <span className="font-medium text-gray-500">Subscription ID:</span>{' '}
+                                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{ngoData.subscription.id}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-500">Plan ID:</span>{' '}
+                                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{ngoData.subscription.plan_id}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-500">Customer ID:</span>{' '}
+                                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{ngoData.subscription.customer_id}</span>
+                                  </div>
+                                </div>
+
+                                {/* Subscription Timeline */}
+                                <div className="mb-3 border-b border-gray-200 pb-3">
+                                  <h4 className="text-xs uppercase font-semibold text-gray-500 mb-2">Timeline</h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-500 text-xs">Start Date</span>
+                                      <span className="font-medium">
+                                        {new Date(ngoData.subscription.current_start * 1000).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-500 text-xs">Current Period Ends</span>
+                                      <span className="font-medium">
+                                        {new Date(ngoData.subscription.current_end * 1000).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-500 text-xs">Next Charge</span>
+                                      <span className="font-medium">
+                                        {new Date(ngoData.subscription.charge_at * 1000).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Billing Information */}
+                                <div className="mb-2">
+                                  <h4 className="text-xs uppercase font-semibold text-gray-500 mb-2">Billing Status</h4>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <div className="mr-3 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-700" viewBox="0 0 20 20" fill="currentColor">
+                                          <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                                          <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">Payments</div>
+                                        <div className="text-xs text-gray-500">
+                                          {ngoData.subscription.paid_count} of {ngoData.subscription.total_count} payments completed
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="text-right">
+                                      <div className="font-medium text-green-600">{ngoData.subscription.remaining_count}</div>
+                                      <div className="text-xs text-gray-500">remaining payments</div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Progress Bar */}
+                                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                                    <div 
+                                      className="bg-blue-600 h-2.5 rounded-full" 
+                                      style={{ width: `${(ngoData.subscription.paid_count / ngoData.subscription.total_count) * 100}%` }}>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -826,100 +922,6 @@ const AdminOverview = () => {
             Respond to Incident
           </Button>
         </div>
-      </div>
-      
-      {/* Recent Activity */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
-        <Card>
-          <CardBody className="p-0">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {/* Recent Adoptions */}
-                {adoptionRequests.slice(0, 2).map(request => (
-                  <tr key={`adoption-${request.id}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.requestedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      Adoption application for {request.animal.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${request.status === 'PENDING' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : request.status === 'APPROVED' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'}`}>
-                        {request.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                
-                {/* Recent Emergencies */}
-                {emergencies.slice(0, 2).map(emergency => (
-                  <tr key={`emergency-${emergency.id}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(emergency.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      Emergency report: {emergency.description?.animalType || 'Animal'} {emergency.description?.mainDescription?.substring(0, 30)}...
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${emergency.status === 'PENDING' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : emergency.status === 'ACCEPTED' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'}`}>
-                        {emergency.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                
-                {/* Recent Donations */}
-                {donations.slice(0, 1).map(donation => (
-                  <tr key={`donation-${donation.id}`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(donation.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      Donation received: {formatCurrency(donation.amount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${donation.status === 'COMPLETED' 
-                          ? 'bg-green-100 text-green-800' 
-                          : donation.status === 'PENDING' 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-gray-100 text-gray-800'}`}>
-                        {donation.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                
-                {/* Show message if no activities */}
-                {adoptionRequests.length === 0 && emergencies.length === 0 && donations.length === 0 && (
-                  <tr>
-                    <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
-                      No recent activities to display
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
       </div>
     </div>
   );

@@ -1,6 +1,4 @@
 import Razorpay from 'razorpay';
-import { verifyToken } from '../middleware/auth.js';
-import prisma from '../lib/prismaclient.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 
@@ -17,6 +15,32 @@ const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+export const getSubscriptiondetailById = async (req, res) => {
+    try {
+        const { subscriptionId } = req.params;
+        if (!subscriptionId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Subscription ID is required'
+            });
+        }
+
+        const SubscriptionDetails = await razorpay.subscriptions.fetch(subscriptionId);
+
+        if (SubscriptionDetails) {
+            return res.status(200).json({
+                success: true,
+                subscription: SubscriptionDetails
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching subscription details:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch subscription details',
+        });
+    }
+};
 
 export const createSubscription = async (req, res) => {
     try {

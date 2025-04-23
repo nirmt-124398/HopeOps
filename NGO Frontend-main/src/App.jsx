@@ -87,6 +87,14 @@ const RoutesWrapper = () => {
         }
       />
       <Route
+        path="/animal/:id"
+        element={
+          <PageWrapper>
+            <AnimalDetails />
+          </PageWrapper>
+        }
+      />
+      <Route
         path="/adopt"
         element={
           <PageWrapper>
