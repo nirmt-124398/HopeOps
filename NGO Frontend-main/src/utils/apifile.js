@@ -15,6 +15,7 @@ apiRequest.interceptors.request.use(
           const user = JSON.parse(userStr);
           
           // Check if user contains a token property directly
+          console.log('User Token:', user.token);
           if (user.token) {
             config.headers.Authorization = `Bearer ${user.token}`;
             console.log('Using token from user.token');
