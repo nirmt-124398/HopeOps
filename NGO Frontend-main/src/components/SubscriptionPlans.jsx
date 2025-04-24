@@ -1,35 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import LoadingSpinner from './common/LoadingSpinner';
 import useAuthRedirect from '../hooks/useAuthRedirect';
 import apiRequest from '../utils/apifile';
+import { useAuth } from '../context/AuthContext';
 
 const SubscriptionPlans = () => {
     const navigate = useNavigate();
-    const { loading: authLoading } = useAuthRedirect();
+    const { user } = useAuth();
+    const { loading: authLoading, redirectToLogin } = useAuthRedirect();
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [plans, setPlans] = useState([]);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchPlans = async () => {
-            try {
-                const response = await apiRequest.get('/subscriptions/plans');
-                setPlans(response.data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to fetch subscription plans. Please try again later.');
-                console.error('Error fetching plans:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        // Check if user is authenticated
+        if (!authLoading && !user) {
+            // Redirect to login if not authenticated
+            redirectToLogin();
+            return;
+        }
 
-        fetchPlans();
-    }, []);
+        // Only fetch plans if user is authenticated
+        if (!authLoading && user) {
+            const fetchPlans = async () => {
+                try {
+                    const response = await apiRequest.get('/subscriptions/plans');
+                    setPlans(response.data);
+                    setError(null);
+                } catch (err) {
+                    setError('Failed to fetch subscription plans. Please try again later.');
+                    console.error('Error fetching plans:', err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            fetchPlans();
+        }
+    }, [user, authLoading, redirectToLogin]);
 
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan);

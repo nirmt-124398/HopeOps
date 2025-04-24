@@ -35,11 +35,17 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = (userData) => {
-    // Check if userData has a token property, if not add a placeholder
-    // This helps with identifying authenticated users even if the real token is in cookies
+    // Ensure we have a valid userData object
+    if (!userData) {
+      console.error('Invalid user data provided to login function');
+      return false;
+    }
+    
+    // Store the user data with the token that came from the backend
     const enhancedUserData = {
       ...userData,
-      token: userData.token || 'cookie-auth' // Use existing token or placeholder
+      // Use the token from the backend response, or fallback to placeholder if not available
+      token: userData.token || 'cookie-auth'
     };
     
     setUser(enhancedUserData);
