@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import LoadingSpinner from './common/LoadingSpinner';
 import useAuthRedirect from '../hooks/useAuthRedirect';
+import apiRequest from '../utils/apifile';
 
 const SubscriptionPlans = () => {
     const navigate = useNavigate();
@@ -16,12 +17,7 @@ const SubscriptionPlans = () => {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/api/subscriptions/plans', {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await apiRequest.get('/subscriptions/plans');
                 setPlans(response.data);
                 setError(null);
             } catch (err) {
@@ -163,4 +159,4 @@ const SubscriptionPlans = () => {
     );
 };
 
-export default SubscriptionPlans; 
+export default SubscriptionPlans;

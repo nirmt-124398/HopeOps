@@ -4,12 +4,12 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import LoadingSpinner from './common/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
-
+import apiRequest from '../utils/apifile';
 
 const CreateNGO = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, updateUser ,loading: authLoading } = useAuth();
+    const { user, updateUser, loading: authLoading } = useAuth();
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -72,11 +72,8 @@ const CreateNGO = () => {
         setIsSubmitting(true);
 
         try {
-            // Verify user authentication first
             try {
-                const checkAuthResponse = await axios.get('http://localhost:3000/api/auth/me', {
-                    withCredentials: true
-                });
+                const checkAuthResponse = await apiRequest.get('/auth/me');
                 console.log("Authentication check:", checkAuthResponse.data);
             } catch (authError) {
                 console.error("Authentication check failed:", authError);
@@ -87,8 +84,7 @@ const CreateNGO = () => {
                 }
             }
 
-            // Create subscription
-            const subscriptionResponse = await axios.post('http://localhost:3000/api/subscriptions/create', {
+            const subscriptionResponse = await apiRequest.post('/subscriptions/create', {
                 plan_id: formData.planId,
                 ngoDetails: {
                     name: formData.name,
@@ -100,17 +96,11 @@ const CreateNGO = () => {
                     logo: formData.logo,
                     socialMedia: formData.socialMedia
                 }
-            }, {
-                withCredentials: true,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
 
             if (subscriptionResponse.data.success) {
                 const { subscription } = subscriptionResponse.data;
-                
-                // Open Razorpay checkout
+
                 const options = {
                     key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                     subscription_id: subscription.id,
@@ -120,18 +110,12 @@ const CreateNGO = () => {
                         try {
                             setIsSubmitting(true);
                             console.log('Razorpay response:', response);
-                            
-                            // Verify subscription with payment details
-                            const verifyResponse = await axios.post('http://localhost:3000/api/subscriptions/verify', {
+
+                            const verifyResponse = await apiRequest.post('/subscriptions/verify', {
                                 subscription_id: subscription.id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
                                 razorpay_subscription_id: response.razorpay_subscription_id
-                            }, {
-                                withCredentials: true,
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
                             });
 
                             console.log('Verification response:', verifyResponse.data);
@@ -150,9 +134,8 @@ const CreateNGO = () => {
                                         subscriptionId: verifyResponse.data.subscription.id,
                                         planId: verifyResponse.data.subscription.planId || formData.planId
                                     });
-                                    
-                                    // Create NGO
-                                    const ngoResponse = await axios.post('http://localhost:3000/api/ngos', {
+
+                                    const ngoResponse = await apiRequest.post('/ngos', {
                                         name: formData.name,
                                         description: formData.description,
                                         address: formData.address,
@@ -163,38 +146,24 @@ const CreateNGO = () => {
                                         socialMedia: formData.socialMedia,
                                         subscriptionId: verifyResponse.data.subscription.id,
                                         planId: verifyResponse.data.subscription.planId || formData.planId
-                                    }, {
-                                        withCredentials: true,
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        }
                                     });
-                                    
+
                                     console.log('NGO creation response:', ngoResponse.data);
-                                    
+
                                     if (ngoResponse.data.success) {
-                                        // Update user role to NGO_ADMIN after successful NGO creation
                                         try {
-                                            const updateRoleResponse = await axios.put('http://localhost:3000/api/users/role', 
-                                                { role: 'NGO_ADMIN' },
-                                                {
-                                                    withCredentials: true,
-                                                    headers: {
-                                                        'Content-Type': 'application/json'
-                                                    }
-                                                }
+                                            const updateRoleResponse = await apiRequest.put('/users/role',
+                                                { role: 'NGO_ADMIN' }
                                             );
                                             console.log('User role updated:', updateRoleResponse.data);
                                         } catch (roleError) {
                                             console.error('Failed to update user role:', roleError);
-                                            // Continue anyway - the NGO was created successfully
                                         }
 
-                                        // Update local user state using updateUser function from AuthContext
                                         updateUser({ ...user, role: 'NGO_ADMIN' });
 
-                                        navigate('/', { 
-                                            state: { 
+                                        navigate('/', {
+                                            state: {
                                                 message: 'NGO created successfully!',
                                                 ngo: ngoResponse.data.ngo
                                             }
@@ -203,11 +172,11 @@ const CreateNGO = () => {
                                 } catch (error) {
                                     console.error('NGO creation error:', error);
                                     console.error('Error details:', error.response?.data);
-                                    
+
                                     if (error.response?.status === 422) {
-                                        const errorMsg = error.response?.data?.errors?.[0]?.message || 
-                                                        error.response?.data?.message || 
-                                                        'Validation failed. Please check your input.';
+                                        const errorMsg = error.response?.data?.errors?.[0]?.message ||
+                                            error.response?.data?.message ||
+                                            'Validation failed. Please check your input.';
                                         setError(errorMsg);
                                     } else {
                                         setError(error.response?.data?.error || 'Failed to create NGO. Please try again.');
@@ -218,9 +187,9 @@ const CreateNGO = () => {
                             }
                         } catch (error) {
                             console.error('Verification error:', error);
-                            const errorMessage = error.response?.data?.message || 
-                                               error.response?.data?.error || 
-                                               'Failed to verify subscription. Please try again.';
+                            const errorMessage = error.response?.data?.message ||
+                                error.response?.data?.error ||
+                                'Failed to verify subscription. Please try again.';
                             setError(errorMessage);
                             if (error.response?.status === 401) {
                                 navigate('/login');
@@ -257,14 +226,14 @@ const CreateNGO = () => {
     };
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8"
         >
             <div className="max-w-3xl mx-auto">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -278,15 +247,15 @@ const CreateNGO = () => {
                     </p>
                 </motion.div>
 
-                <motion.form 
-                    onSubmit={handleSubmit} 
+                <motion.form
+                    onSubmit={handleSubmit}
                     className="mt-8 space-y-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                 >
                     {error && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded"
@@ -434,7 +403,7 @@ const CreateNGO = () => {
                             className="space-y-4"
                         >
                             <h3 className="text-lg font-medium text-gray-900">Social Media Links</h3>
-                            
+
                             <div>
                                 <label htmlFor="socialMedia.facebook" className="block text-sm font-medium text-gray-700">
                                     Facebook
