@@ -12,7 +12,6 @@ export const verifyToken = async (req, res, next) => {
 
     // Add debugging to see the token
 
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Add debugging to see the decoded token
