@@ -6,9 +6,23 @@ const apiRequest= axios.create({
 }); 
 apiRequest.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem('user'); // Or however you store your token
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      // Get the user object from localStorage
+      const userStr = localStorage.getItem('user');
+      
+      if (userStr) {
+        try {
+          // Parse the user object to extract the token
+          const user = JSON.parse(userStr);
+          const token = user.token || user;
+          
+          // Set the authorization header
+          config.headers.Authorization = `Bearer ${token}`;
+          
+          // For debugging
+          console.log('Token sent in request:', token);
+        } catch (error) {
+          console.error('Error parsing user token:', error);
+        }
       }
       return config;
     },
