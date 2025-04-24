@@ -85,8 +85,11 @@ export const login = async (req, res) => {
             { expiresIn: age / 1000 }
         );
 
-        // Remove password from response
-        const { password: _, ...userInfo } = user;
+        const userr= {user, token};
+        // Remove password from response userr object
+        // This is a more secure way to handle sensitive data
+        // Instead of destructuring, we can use the delete operator
+        delete userr.user.password;
 
         // Set cookie and send response
         res.cookie('token', token, {
@@ -94,7 +97,7 @@ export const login = async (req, res) => {
             maxAge: age,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
-        }).status(200).json(userInfo);
+        }).status(200).json(userr);
 
     } catch (error) {
         console.error('Login error:', error);

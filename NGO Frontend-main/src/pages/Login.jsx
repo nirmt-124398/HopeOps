@@ -35,8 +35,13 @@ const Login = () => {
           withCredentials: true,
         }
       );
-      //Save to local storage using context api to update the user state in the context
-      login(res.data); // Use login instead of updateUser
+      
+      // Debug: Check if token exists in response
+      console.log('Login response:', res.data);
+      console.log('Token received:', res.data?.token ? 'Yes' : 'No');
+      
+      // Save to local storage using context api to update the user state in the context
+      login(res.data);
       
       navigate("/");
     } catch (error) {
