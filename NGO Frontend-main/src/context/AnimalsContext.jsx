@@ -26,7 +26,7 @@ export const AnimalsProvider = ({ children }) => {
           const response = await apiRequest.get('/animals');
           setAnimals(response.data);
         } catch (apiError) {
-          console.log('API not available, using mock data instead');
+          console.log('/animals --> API not available');
           // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 500));
           setAnimals(mockAnimals);

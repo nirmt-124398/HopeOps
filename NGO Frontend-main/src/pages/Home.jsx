@@ -286,25 +286,6 @@ const Home = () => {
                 whileInView="visible" 
                 viewport={{ once: true }}
               >
-                {featuredAnimals.map((animal, index) => (
-                  <motion.div
-                    key={animal.id}
-                    variants={itemVariant}
-                    whileHover={{ y: -10 }}
-                    className="transform transition-all duration-300"
-                  >
-                    {/* Wrapping AnimalCard with glassmorphism effect and progressive blur */}
-                    <div 
-                      className="rounded-2xl shadow-xl overflow-hidden border border-white/40"
-                      style={{
-                        backdropFilter: `blur(${calculateBlur(1000 + index * 50, 0.3)}px)`,
-                        backgroundColor: `rgba(255, 255, 255, ${0.6 + calculateBlur(1000 + index * 50, 0.01)})`
-                      }}
-                    >
-                      <AnimalCard animal={animal} />
-                    </div>
-                  </motion.div>
-                ))}
               </motion.div>
               
               <motion.div 
