@@ -35,9 +35,16 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return true;  // Returns a boolean value indicating success
+    // Check if userData has a token property, if not add a placeholder
+    // This helps with identifying authenticated users even if the real token is in cookies
+    const enhancedUserData = {
+      ...userData,
+      token: userData.token || 'cookie-auth' // Use existing token or placeholder
+    };
+    
+    setUser(enhancedUserData);
+    localStorage.setItem('user', JSON.stringify(enhancedUserData));
+    return true;
   };
 
   // Logout function
@@ -48,22 +55,27 @@ export const AuthProvider = ({ children }) => {
 
   // Update user function (from the second context)
   const updateUser = (userData) => {
-    setUser(userData);
-    // No explicit localStorage update (though the useEffect will handle this)
-    // No return value
+    // Preserve token if it exists in current user data
+    const currentUser = user || {};
+    const updatedUser = {
+      ...userData,
+      token: userData.token || currentUser.token || 'cookie-auth'
+    };
+    
+    setUser(updatedUser);
   };
 
   // Admin check function
   const isAdmin = () => {
-    return  user?.role === 'NGO_ADMIN';
+    return user?.role === 'NGO_ADMIN';
   };
 
   // Context value to be provided
   const contextValue = {
     user,
-    login, // takes res.data
+    login,
     logout,
-    updateUser, // Added from the second context, takes res.data
+    updateUser,
     isAdmin,
     loading
   };
