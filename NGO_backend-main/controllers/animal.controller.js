@@ -203,7 +203,7 @@ export const getNGOAnimals = async (req, res) => {
   try {
     // Find the NGO associated with this admin
     const ngoAdmin = await prisma.nGOAdmin.findFirst({
-      where: { userId: req.user.id }
+      where: { userId: req.user }
     });
 
     if (!ngoAdmin) {

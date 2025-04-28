@@ -943,8 +943,8 @@ const AdminAnimals = () => {
     const fetchAnimals = async () => {
       try {
         setLoading(true);
-        // Using the apiRequest utility instead of direct axios calls
-        const response = await apiRequest.get("/animals");
+        // Using the NGO-specific endpoint to only fetch animals for the current NGO admin
+        const response = await apiRequest.get("/animals/ngo/animals");
         
         if (Array.isArray(response.data)) {
           setAnimals(response.data);
@@ -953,7 +953,8 @@ const AdminAnimals = () => {
           setError('Received invalid data format from server.');
         }
       } catch (err) {
-        setError('Failed to load animals. Please try again.');
+        console.error('Error fetching animals:', err);
+        setError(err.response?.data?.error || 'Failed to load animals. Please try again.');
         setAnimals([]);
       } finally {
         setLoading(false);
@@ -966,20 +967,20 @@ const AdminAnimals = () => {
   // Handle add new animal
   const handleAddAnimal = async (formData) => {
     try {
-      const response = await apiRequest.post(
-        "/animals",
-        formData
-      );
+      // When adding, the backend will automatically associate with the current NGO
+      const response = await apiRequest.post("/animals", formData);
       setAnimals(prev => [...prev, response.data]);
       setShowAddModal(false);
     } catch (err) {
-      alert('Failed to add animal. Please try again.');
+      console.error('Error adding animal:', err);
+      alert(err.response?.data?.error || 'Failed to add animal. Please try again.');
     }
   };
 
   // Handle update animal
   const handleUpdateAnimal = async (formData) => {
     try {
+      // The backend will verify this animal belongs to the NGO before updating
       const response = await apiRequest.put(
         `/animals/${currentAnimal.id}`,
         formData
@@ -990,18 +991,21 @@ const AdminAnimals = () => {
       setShowEditModal(false);
       setCurrentAnimal(null);
     } catch (err) {
-      alert('Failed to update animal. Please try again.');
+      console.error('Error updating animal:', err);
+      alert(err.response?.data?.error || 'Failed to update animal. Please try again.');
     }
   };
 
   // Handle delete animal
   const handleDeleteAnimal = async (id) => {
     try {
+      // The backend will verify this animal belongs to the NGO before deleting
       await apiRequest.delete(`/animals/${id}`);
       setAnimals(prev => prev.filter(animal => animal.id !== id));
       setDeleteConfirmation(null);
     } catch (err) {
-      alert('Failed to delete animal. Please try again.');
+      console.error('Error deleting animal:', err);
+      alert(err.response?.data?.error || 'Failed to delete animal. Please try again.');
     }
   };
 
