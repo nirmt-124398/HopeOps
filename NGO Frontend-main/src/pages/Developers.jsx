@@ -1,36 +1,70 @@
 import React from 'react';
-
 const DeveloperCard = ({ name, role, responsibilities, achievements, image }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-xl hover:-translate-y-1">
-      <div className="md:flex">
-        <div className="md:w-1/3">
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100">
+      <div className="flex flex-col md:flex-row">
+        <div className="md:w-1/4 relative overflow-hidden">
+          <div className="bg-primary/10 absolute inset-0 -z-10"></div>
           <img 
             src={image || "https://via.placeholder.com/300x400?text=Developer"} 
             alt={name}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-64 md:h-auto md:aspect-[3/4] object-cover object-center transition-transform hover:scale-105 duration-500"
           />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/90 to-transparent p-4 md:hidden">
+            <h2 className="text-2xl font-bold text-white">{name}</h2>
+            <p className="text-white/90 font-medium">{role}</p>
+          </div>
         </div>
-        <div className="p-6 md:w-2/3">
-          <h2 className="text-2xl font-bold text-primary mb-2">{name}</h2>
-          <p className="text-lg text-secondary font-medium mb-4">{role}</p>
-          
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">Responsibilities:</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              {responsibilities.map((item, index) => (
-                <li key={index} className="text-gray-700">{item}</li>
-              ))}
-            </ul>
+        
+        <div className="p-6 md:w-3/4 flex flex-col justify-between">
+          <div>
+            <div className="hidden md:block mb-4">
+              <h2 className="text-2xl font-bold text-primary">{name}</h2>
+              <p className="text-secondary font-medium inline-block px-3 py-1 bg-secondary/10 rounded-full text-sm mt-1">{role}</p>
+            </div>
+            
+            <div className="mb-5">
+              <h3 className="text-lg font-semibold mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Responsibilities
+              </h3>
+              <ul className="space-y-1">
+                {responsibilities.map((item, index) => (
+                  <li key={index} className="text-gray-700 flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Notable Work
+              </h3>
+              <ul className="space-y-1">
+                {achievements.map((item, index) => (
+                  <li key={index} className="text-gray-700 flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Notable Work:</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              {achievements.map((item, index) => (
-                <li key={index} className="text-gray-700">{item}</li>
-              ))}
-            </ul>
+          <div className="mt-4 pt-4 border-t border-gray-100 hidden md:block">
+            <a href="https://www.linkedin.com/in/nirmit-rampal-4a9b55245/" className="text-primary font-medium hover:underline text-sm flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Connect on LinkedIn
+            </a>
           </div>
         </div>
       </div>
@@ -43,7 +77,7 @@ const Developers = () => {
     {
       name: "Nirmit Rampal",
       role: "Full Stack Developer",
-      image: "/images/developers/nirmit-rampal.jpg",
+      image: "/nirmit_rampal.jpg",
       responsibilities: [
         "Fully handled connecting backend with frontend",
         "Frontend development using React",
