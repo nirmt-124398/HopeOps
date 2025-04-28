@@ -34,7 +34,7 @@ import SubscriptionPlans from "./components/SubscriptionPlans";
 import CreateNGO from "./components/CreateNGO";
 import UserAdoptionRequests from "./pages/UserAdoptionRequests";
 import UserDonationsPage from "./pages/UserDonationsPage";
-
+import Developers from "./pages/Developers";
 
 function App() {
   return (
@@ -75,6 +75,14 @@ const RoutesWrapper = () => {
         element={
           <PageWrapper>
             <AnimalList />
+          </PageWrapper>
+        }
+      />
+      <Route
+        path="/developers"
+        element={
+          <PageWrapper>
+            <Developers />
           </PageWrapper>
         }
       />
