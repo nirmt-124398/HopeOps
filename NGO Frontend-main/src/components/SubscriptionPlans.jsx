@@ -19,7 +19,7 @@ const SubscriptionPlans = () => {
         // Check if user is authenticated
         if (!authLoading && !user) {
             // Redirect to login if not authenticated
-            redirectToLogin();
+            navigate("/signup");
             return;
         }
 
