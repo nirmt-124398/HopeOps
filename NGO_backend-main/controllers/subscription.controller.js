@@ -44,34 +44,70 @@ export const getSubscriptiondetailById = async (req, res) => {
 
 export const createSubscription = async (req, res) => {
     try {
-        const { plan_id, ngoDetails } = req.body;
+        console.log('Subscription creation request received:', req.body);
+        
+        const { planId, ngoDetails } = req.body;
 
-        if (!plan_id) {
+        if (!planId) {
+            console.log('Missing plan ID in request');
             return res.status(400).json({ 
                 success: false, 
                 error: 'Plan ID is required' 
             });
         }
 
-        // Create subscription with minimal notes
-        const subscription = await razorpay.subscriptions.create({
-            plan_id: plan_id,
-            total_count: 12, // 1 year subscription
-            notes: {
-                ngo_name: ngoDetails.name,
-                contact_email: ngoDetails.contactEmail
-            }
-        });
+        // Validate ngoDetails exist and have required properties
+        if (!ngoDetails || !ngoDetails.name || !ngoDetails.contactEmail) {
+            console.log('Missing or invalid NGO details:', ngoDetails);
+            return res.status(400).json({
+                success: false,
+                error: 'NGO details are required (must include name and contactEmail)'
+            });
+        }
 
-        res.json({ 
-            success: true, 
-            subscription 
-        });
+        // Check if Razorpay credentials are available
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error('Razorpay credentials missing');
+            return res.status(500).json({
+                success: false,
+                error: 'Server configuration error - payment gateway credentials missing'
+            });
+        }
+
+        console.log(`Attempting to create subscription with plan_id: ${planId}`);
+        
+        // Create subscription with minimal notes
+        try {
+            const subscription = await razorpay.subscriptions.create({
+                plan_id: planId,
+                total_count: 12, // 1 year subscription
+                notes: {
+                    ngo_name: ngoDetails.name,
+                    contact_email: ngoDetails.contactEmail
+                }
+            });
+            
+            console.log('Subscription created successfully:', subscription.id);
+            
+            res.json({ 
+                success: true, 
+                subscription 
+            });
+        } catch (razorpayError) {
+            console.error('Razorpay API error:', razorpayError);
+            const errorMessage = razorpayError.error?.description || razorpayError.message || 'Failed to communicate with payment gateway';
+            
+            return res.status(422).json({
+                success: false,
+                error: errorMessage
+            });
+        }
     } catch (error) {
-        console.error('Subscription creation error:', error);
+        console.error('Subscription creation error (global):', error);
         res.status(500).json({ 
             success: false, 
-            error: error.message || 'Failed to create subscription' 
+            error: error.message || 'Failed to create subscription',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
@@ -133,7 +169,7 @@ export const verifySubscription = async (req, res) => {
                     success: true,
                     subscription: {
                         id: subscription.id,
-                        planId: subscription.plan_id,
+                        planId: subscription.planId,
                         status: subscription.status,
                         payment_id: razorpay_payment_id
                     },

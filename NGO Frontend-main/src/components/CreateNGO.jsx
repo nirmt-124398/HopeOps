@@ -73,19 +73,20 @@ const CreateNGO = () => {
 
         try {
             try {
-                const checkAuthResponse = await apiRequest.get('/auth/me');
+                const checkAuthResponse = await apiRequest.get('/test/should-be-logged-in');
                 console.log("Authentication check:", checkAuthResponse.data);
             } catch (authError) {
                 console.error("Authentication check failed:", authError);
                 if (authError.response?.status === 401) {
                     setError('Please log in to continue.');
-                    navigate('/login', { state: { from: location.pathname } });
+                    // navigate('/login', { state: { from: location.pathname } });
                     return;
                 }
             }
 
-            const subscriptionResponse = await apiRequest.post('/subscriptions/create', {
-                plan_id: formData.planId,
+            // Log the data being sent to help with debugging
+            const subscriptionPayload = {
+                planId: formData.planId,
                 ngoDetails: {
                     name: formData.name,
                     description: formData.description,
@@ -96,7 +97,11 @@ const CreateNGO = () => {
                     logo: formData.logo,
                     socialMedia: formData.socialMedia
                 }
-            });
+            };
+            
+            console.log('Sending subscription payload:', subscriptionPayload);
+
+            const subscriptionResponse = await apiRequest.post('/subscriptions/create', subscriptionPayload);
 
             if (subscriptionResponse.data.success) {
                 const { subscription } = subscriptionResponse.data;
@@ -213,11 +218,19 @@ const CreateNGO = () => {
             }
         } catch (error) {
             console.error('Subscription creation error:', error);
+            const errorResponse = error.response?.data;
+            
             if (error.response?.status === 401) {
                 setError('Please log in to continue.');
                 navigate('/login');
+            } else if (error.response?.status === 422) {
+                // Validation error from Razorpay
+                setError(errorResponse?.error || 'The payment gateway rejected the request. Please check your plan details.');
+            } else if (errorResponse?.error) {
+                // Specific error message from our backend
+                setError(`Payment gateway error: ${errorResponse.error}`);
             } else {
-                setError(error.response?.data?.error || 'Something went wrong. Please try again.');
+                setError('Failed to create subscription. Please try again or contact support.');
             }
         } finally {
             setLoading(false);
