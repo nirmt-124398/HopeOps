@@ -64,7 +64,7 @@ const CreateNGO = () => {
             }));
         }
     };
-
+// Project originally made by Nirmit Rampal(Original github repo: https://github.com/nirmt-124398/HopeOps) only
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);

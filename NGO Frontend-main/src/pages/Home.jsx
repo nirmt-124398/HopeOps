@@ -52,6 +52,7 @@ const Home = () => {
     // Start blurring after scrolling past offsetStart pixels
     const scrollOffset = Math.max(0, scrollY - offsetStart);
     // Max blur of 10px, scaled by intensity
+    console.log("Project originally made by Nirmit Rampal(Original github repo: https://github.com/nirmt-124398/HopeOps) only")
     return Math.min(scrollOffset / 100 * intensity, 10);
   };
 
