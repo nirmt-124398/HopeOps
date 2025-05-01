@@ -38,10 +38,10 @@ app.use(
 // Handle preflight requests globally
 app.options('*', cors());
 
-// Rate limiting (200 requests per 15 minutes)
-// app.use(apiLimiter);
+// Rate Limiting (200 requests per 15 minutes)
+app.use(apiLimiter);
 
-// Sanitize input to prevent XSS attacks
+// Sanitie input to preVent XSS attacks
 app.use(sanitizeInput);
 
 app.use(express.json());
