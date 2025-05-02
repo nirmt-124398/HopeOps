@@ -7,6 +7,7 @@ import HorizontalScroll from '../components/ui/HorizontalScroll';
 import { useAnimals } from '../context/AnimalsContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import Chatbot from '../components/Chatbot';
 
 const Home = () => {
   const animalsContext = useAnimals();
@@ -52,7 +53,6 @@ const Home = () => {
     // Start blurring after scrolling past offsetStart pixels
     const scrollOffset = Math.max(0, scrollY - offsetStart);
     // Max blur of 10px, scaled by intensity
-    console.log("Project originally made by Nirmit Rampal(Original github repo: https://github.com/nirmt-124398/HopeOps) only")
     return Math.min(scrollOffset / 100 * intensity, 10);
   };
 
@@ -377,6 +377,9 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Add Chatbot at the end of the main container - not inside any section */}
+      <Chatbot />
     </div>
   );
 };
