@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -19,6 +19,7 @@ const schema = yup.object().shape({
 });
 
 const DonationPage = () => {
+  const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState(50);
   const [isCustomAmount, setIsCustomAmount] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,7 @@ const DonationPage = () => {
   };
   
   const onSubmit = async (data) => {
+    
     try {
       setLoading(true);
       setError(null);
@@ -103,9 +105,9 @@ const DonationPage = () => {
             
             // Redirect to donation history page for logged in users or homepage for guests
             if (user) {
-              window.location.href = '/my-donations';
+              navigate('/my-donations');
             } else {
-              window.location.href = '/';
+              navigate('/');
             }
             
           } catch (err) {
