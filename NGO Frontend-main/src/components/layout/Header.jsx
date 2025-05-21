@@ -45,7 +45,7 @@ const Header = () => {
     { path: '/animals', label: 'Animals' },
     { path: '/adopt', label: 'Adopt' },
     { path: '/donate', label: 'Donate' },
-    // { path: '/developers', label: 'Developers' },
+    { path: '/developer', label: 'Developer' },
     ...(user?.role !== 'NGO_ADMIN' ? [{ path: '/subscription-plans', label: 'Pricing' }] : []),
   ];
 

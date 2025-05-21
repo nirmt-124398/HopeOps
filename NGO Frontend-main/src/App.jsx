@@ -79,7 +79,7 @@ const RoutesWrapper = () => {
         }
       />
       <Route
-        path="/developers"
+        path="/developer"
         element={
           <PageWrapper>
             <Developers />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-// Import Botpress components only if needed
 import { Fab, Webchat } from '@botpress/webchat'
 
 // Create a wrapper component to silence the defaultProps warning
