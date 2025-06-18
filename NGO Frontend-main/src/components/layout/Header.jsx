@@ -45,7 +45,7 @@ const Header = () => {
     { path: '/animals', label: 'Animals' },
     { path: '/adopt', label: 'Adopt' },
     { path: '/donate', label: 'Donate' },
-    { path: '/developer', label: 'Developer' },
+    // { path: '/developer', label: 'Developer' },
     ...(user?.role !== 'NGO_ADMIN' ? [{ path: '/subscription-plans', label: 'Pricing' }] : []),
   ];
 
@@ -160,12 +160,12 @@ const Header = () => {
                         </Link>
                       )
                     ))}
-                    <Link 
+                    {/* <Link 
                       to="/my-donations" 
                       className="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors"
                     >
                       My Donations
-                    </Link>
+                    </Link> */}
                     <button 
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors"
