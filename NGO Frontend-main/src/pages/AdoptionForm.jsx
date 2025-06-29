@@ -8,6 +8,7 @@ import Input, { TextArea, Select } from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardBody, CardFooter } from '../components/ui/Card';
 import apiRequest from '../utils/apifile.js';
+import { trackEvent, trackUserInteraction } from '../utils/gtm';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -96,9 +97,29 @@ const AdoptionForm = () => {
     setError('');
 
     try {
+      // Track adoption request initiation
+      trackUserInteraction('adoption_request_initiated', {
+        animal_id: animalId,
+        animal_name: selectedAnimal?.name || 'unknown',
+        animal_type: selectedAnimal?.type || 'unknown',
+        animal_breed: selectedAnimal?.breed || 'unknown',
+        applicant_housing_type: data.housingType,
+        has_previous_pets: data.hasOwnedPetsBefore,
+        has_children: data.hasChildren,
+        timestamp: new Date().toISOString()
+      });
+
       // Submit adoption request
       await apiRequest.post('/adoptions/request', {
         animalId: animalId
+      });
+
+      // Track successful adoption request submission
+      trackUserInteraction('adoption_request_completed', {
+        animal_id: animalId,
+        animal_name: selectedAnimal?.name || 'unknown',
+        animal_type: selectedAnimal?.type || 'unknown',
+        timestamp: new Date().toISOString()
       });
 
       setAdoptionSuccess(true);
@@ -110,6 +131,10 @@ const AdoptionForm = () => {
       alert('Thank you for submitting your adoption application! We will contact you soon.');
     } catch (err) {
       console.error('Error submitting adoption request:', err);
+      
+      // Track adoption request failure
+      trackEvent('adoption_request_failed', 'adoption_error', 'submission_error', animalId);
+      
       setError(err.response?.data?.error || 'Failed to submit adoption request. Please try again.');
     } finally {
       setSubmitting(false);

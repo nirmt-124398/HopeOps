@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -35,6 +36,7 @@ import CreateNGO from "./components/CreateNGO";
 import UserAdoptionRequests from "./pages/UserAdoptionRequests";
 import UserDonationsPage from "./pages/UserDonationsPage";
 import Developers from "./pages/Developers";
+import { useGTMTracking } from "./hooks/useGTMTracking";
 
 function App() {
   return (
@@ -60,6 +62,9 @@ function App() {
 
 const RoutesWrapper = () => {
   const location = useLocation();
+  // Initialize GTM tracking - this will automatically track page views
+  useGTMTracking();
+  
   return (
     <Routes location={location} key={location.pathname}>
       <Route

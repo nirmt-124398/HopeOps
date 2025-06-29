@@ -8,6 +8,7 @@ import Input, { Select, TextArea } from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import apiRequest from '../utils/apifile.js';
 import { useAuth } from '../context/AuthContext';
+import { trackEvent, trackUserInteraction } from '../utils/gtm';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -41,12 +42,21 @@ const DonationPage = () => {
     setSelectedAmount(amount);
     setIsCustomAmount(false);
     setValue('amount', amount);
+    
+    // Track donation amount selection
+    trackEvent('donation_amount_selected', 'donation', `preset_${amount}`, amount);
   };
   
   const handleCustomAmount = (e) => {
     setIsCustomAmount(true);
     setSelectedAmount(0);
-    setValue('amount', e.target.value ? parseFloat(e.target.value) : '');
+    const customValue = e.target.value ? parseFloat(e.target.value) : '';
+    setValue('amount', customValue);
+    
+    // Track custom amount entry
+    if (customValue) {
+      trackEvent('donation_amount_selected', 'donation', 'custom_amount', customValue);
+    }
   };
   
   const onSubmit = async (data) => {
@@ -54,6 +64,13 @@ const DonationPage = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Track donation initiation
+      trackUserInteraction('donation_initiated', {
+        amount: data.amount,
+        donation_type: data.donationType,
+        user_type: user ? 'logged_in' : 'guest'
+      });
       
       // Get token from localStorage if available
       const token = localStorage.getItem('token');
@@ -97,6 +114,17 @@ const DonationPage = () => {
               withCredentials: true
             });
             
+            // Track successful donation completion
+            trackUserInteraction('donation_completed', {
+              amount: data.amount,
+              donation_type: data.donationType,
+              payment_method: 'razorpay',
+              payment_id: response.razorpay_payment_id,
+              order_id: response.razorpay_order_id,
+              user_type: user ? 'logged_in' : 'guest',
+              timestamp: new Date().toISOString()
+            });
+            
             // Reset loading state
             setLoading(false);
             
@@ -112,12 +140,18 @@ const DonationPage = () => {
             
           } catch (err) {
             console.error('Payment verification failed:', err);
+            
+            // Track payment verification failure
+            trackEvent('donation_verification_failed', 'donation_error', 'payment_verification', data.amount);
+            
             setError('Payment verification failed. Please contact support.');
             setLoading(false);
           }
         },
         modal: {
           ondismiss: function() {
+            // Track payment modal dismissal
+            trackEvent('donation_modal_dismissed', 'donation_abandonment', 'payment_cancelled', data.amount);
             setLoading(false);
           },
           escape: false,
@@ -133,6 +167,10 @@ const DonationPage = () => {
       
     } catch (err) {
       console.error('Error initiating donation:', err);
+      
+      // Track donation initiation failure
+      trackEvent('donation_initiation_failed', 'donation_error', 'api_error', data.amount);
+      
       setError(err.response?.data?.error || 'Failed to process donation. Please try again.');
       setLoading(false);
     }
